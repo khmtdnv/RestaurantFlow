@@ -2,12 +2,8 @@ services:
   restaurant-db:
     image: postgres:15-alpine
     container_name: restaurant-db
-    ports:
-      - "5232:5432" # Хост:Контейнер
     volumes:
       - restaurant-postgres-data:/var/lib/postgresql/data
-    env_file:
-      - .env.dev
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U restaurant_user -d restaurant_db"]
       interval: 5s
@@ -15,21 +11,11 @@ services:
       retries: 5
 
   app:
-      build:
-        context: .
-        target: dev
-      env_file:
-        - .env.dev
-      depends_on:
-        restaurant-db:
-          condition: service_healthy
-      # 1. Открываем порт, чтобы вы могли достучаться до приложения с хоста
-      ports:
-        - "8000:8000"
-      # 2. Меняем команду на запуск сервера
-      # --host 0.0.0.0 обязателен для Docker
-      # --reload нужен для разработки (авто-перезагрузка при изменении кода)
-      command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    build:
+      context: .
+    depends_on:
+      restaurant-db:
+        condition: service_healthy
 
 volumes:
   restaurant-postgres-data:
