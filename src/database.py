@@ -1,38 +1,18 @@
-import asyncio
-from typing import Annotated
+from typing import AsyncGenerator
 
-from sqlalchemy import URL, String, create_engine, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.orm import DeclarativeBase
 
-from config import settings
+from src.config import settings
 
-sync_engine = create_engine(
-    url=settings.DATABASE_URL_psycopg,
-    echo=True,
-    # pool_size=5,
-    # max_overflow=10,
+engine = create_async_engine(settings.DATABASE_URL, echo=True)
+
+async_session_factory = async_sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
 )
-
-
-async_engine = create_async_engine(
-    url=settings.DATABASE_URL_asyncpg,
-    echo=True,
-    # pool_size=5,
-    # max_overflow=10,
-)
-
-session_factory = sessionmaker(sync_engine)
-async_session_factory = async_sessionmaker(async_engine)
-
-str_256 = Annotated[str, 256]
 
 
 class Base(DeclarativeBase):
-    type_annotation_map = {
-        str_256: String(256),
-    }
-
     repr_cols_num = 3
     repr_cols = tuple()
 
@@ -42,3 +22,8 @@ class Base(DeclarativeBase):
             if col in self.repr_cols or idx < self.repr_cols_num:
                 cols.append(f"{col}={getattr(self, col)}")
         return f"<{self.__class__.__name__} {','.join(cols)}>"
+
+
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session_factory() as session:
+        yield session

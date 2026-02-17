@@ -1,54 +1,21 @@
-from datetime import datetime
-from typing import Optional
-
-from pydantic import BaseModel, ConfigDict
-
-from models import Workload
+from pydantic import BaseModel, EmailStr
 
 
-class WorkersAddDTO(BaseModel):
-    username: str
+# То, что юзер шлет нам при регистрации
+class UserCreate(BaseModel):
+    name: str
+    phone_number: str
 
 
-class WorkersDTO(WorkersAddDTO):
+# То, что мы отдаем юзеру (без пароля!)
+class UserRead(BaseModel):
     id: int
+    name: str
+    phone_number: str
+    is_active: bool
+    is_superuser: bool
+    is_phone_verified: bool
 
-
-class ResumesAddDTO(BaseModel):
-    title: str
-    compensation: Optional[int]
-    workload: Workload
-    worker_id: int
-
-
-class ResumesDTO(ResumesAddDTO):
-    id: int
-    created_at: datetime
-    updated_at: datetime
-
-
-class ResumesRelDTO(ResumesDTO):
-    worker: "WorkersDTO"
-
-
-class WorkersRelDTO(WorkersDTO):
-    resumes: list["ResumesDTO"]
-
-
-class WorkloadAvgCompensationDTO(BaseModel):
-    workload: Workload
-    avg_compensation: int
-
-
-class VacanciesAddDTO(BaseModel):
-    title: str
-    compensation: Optional[int]
-
-
-class VacanciesDTO(VacanciesAddDTO):
-    id: int
-
-
-class ResumeRelVacanciesRepliedDTO(ResumesDTO):
-    worker: "WorkersDTO"
-    vacancies_replied: list["VacanciesDTO"]
+    # Нужно для конвертации SQLAlchemy модели -> Pydantic
+    class Config:
+        from_attributes = True
