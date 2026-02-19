@@ -1,17 +1,43 @@
-from fastapi import APIRouter, Depends, HTTPException
+import jwt
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 
 from src.application.dto import UserCreateDTO, UserDTO
 from src.application.interfaces import AbstractUnitOfWork
 from src.application.use_cases import RegisterUserUseCase, VerifyPhoneUseCase
+from src.config import settings
+from src.domain.entities import UserDomain
 from src.infrastructure.uow import SQLAlchemyUnitOfWork
 from src.presentation.api.schemas import UserCreate, UserRead, VerifyCodeRequest
 
 user_router = APIRouter(prefix="/users", tags=["Users"])
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
 
 async def get_uow() -> AbstractUnitOfWork:
     return SQLAlchemyUnitOfWork()
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme), uow: AbstractUnitOfWork = Depends(get_uow)
+):
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    async with uow:
+        user = await uow.users.find_one(id=int(user_id))
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if not user.is_phone_verified:
+            raise HTTPException(status_code=403, detail="Phone not verified")
+        return user
 
 
 async def get_register_user_use_case(
@@ -24,6 +50,11 @@ async def get_verify_phone_use_case(
     uow: AbstractUnitOfWork = Depends(get_uow),
 ) -> VerifyPhoneUseCase:
     return VerifyPhoneUseCase(uow)
+
+
+@user_router.get("/me")
+async def get_me(current_user: UserDomain = Depends(get_current_user)):
+    return current_user
 
 
 @user_router.post("/", response_model=UserRead)
