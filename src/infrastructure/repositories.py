@@ -4,9 +4,13 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.application.interfaces import AbstractRepository, AbstractUserRepository
-from src.domain.entities import UserDomain
-from src.infrastructure.database.orm import UserORM
+from src.application.interfaces import (
+    AbstractPhoneVerificationRepository,
+    AbstractRepository,
+    AbstractUserRepository,
+)
+from src.domain.entities import PhoneVerification, UserDomain
+from src.infrastructure.database.orm import PhoneVerificationORM, UserORM
 
 TModel = TypeVar("TModel")
 TEntity = TypeVar("TEntity", bound=BaseModel)
@@ -20,13 +24,22 @@ class SQLAlchemyRepository(AbstractRepository[TEntity], Generic[TModel, TEntity]
         self.session = session
 
     async def add_one(self, data: TEntity) -> TEntity:
-        data_dict = data.model_dump(exclude={"id", "created_at", "updated_at"})
+        data_dict = data.model_dump(exclude_none=True)
         statement = self.model(**data_dict)
 
         self.session.add(statement)
         await self.session.flush()
 
         data.id = statement.id
+        return data
+
+    async def update(self, data: TEntity) -> TEntity:
+        data_dict = data.model_dump(exclude_none=True)
+        statement = self.model(**data_dict)
+
+        await self.session.merge(statement)
+        await self.session.flush()
+
         return data
 
     async def find_one(self, **filter_by) -> TEntity | None:
@@ -38,6 +51,14 @@ class SQLAlchemyRepository(AbstractRepository[TEntity], Generic[TModel, TEntity]
             return None
 
         return self.entity.model_validate(orm_obj)
+
+
+class PhoneVerificationRepository(
+    SQLAlchemyRepository[PhoneVerificationORM, PhoneVerification],
+    AbstractPhoneVerificationRepository,
+):
+    model = PhoneVerificationORM
+    entity = PhoneVerification
 
 
 class UserRepository(SQLAlchemyRepository[UserORM, UserDomain], AbstractUserRepository):

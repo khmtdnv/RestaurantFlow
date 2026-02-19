@@ -1,6 +1,6 @@
 from src.application.interfaces import AbstractUnitOfWork
 from src.database import async_session_factory
-from src.infrastructure.repositories import UserRepository
+from src.infrastructure.repositories import PhoneVerificationRepository, UserRepository
 
 
 class SQLAlchemyUnitOfWork(AbstractUnitOfWork):
@@ -11,6 +11,7 @@ class SQLAlchemyUnitOfWork(AbstractUnitOfWork):
         self.session = self.session_factory()
 
         self.users = UserRepository(self.session)
+        self.verifications = PhoneVerificationRepository(self.session)
 
         return self
 

@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+import re
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class UserCreate(BaseModel):
@@ -16,3 +18,21 @@ class UserRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class VerifyCodeRequest(BaseModel):
+    phone_number: str = Field(..., examples=["+79991234567"])
+    code: str = Field(..., min_length=4, max_length=4, examples=["1234"])
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        if not re.match(r"^(\+7|8)9\d{9}$", v):
+            raise ValueError("Неверный формат российского номера телефона")
+        return v
+
+
+class TokenPair(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "Bearer"

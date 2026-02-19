@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from src.config import settings
 from src.database import Base
-from src.models import User
+from src.infrastructure.database.orm import UserORM
 
 config = context.config
 
@@ -20,6 +20,11 @@ config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 
 target_metadata = Base.metadata
+
+# other values from the config, defined by the needs of env.py,
+# can be acquired:
+# my_important_option = config.get_main_option("my_important_option")
+# ... etc.
 
 
 def run_migrations_offline() -> None:
