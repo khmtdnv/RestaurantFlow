@@ -19,7 +19,7 @@ updated_at = Annotated[
 ]
 
 
-class User(Base):
+class UserORM(Base):
     __tablename__ = "users"
 
     id: Mapped[intpk]

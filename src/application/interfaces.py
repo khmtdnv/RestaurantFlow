@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Type
 
 from src.database import async_session_factory
-from src.repositories import UserRepository
+from src.infrastructure.repositories import UserRepository
 
 
 class UnitOfWork:
