@@ -1,61 +1,48 @@
-from abc import ABC, abstractmethod
-from typing import Any, List, Optional
+from typing import Generic, Type, TypeVar
 
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.application.interfaces import AbstractRepository, AbstractUserRepository
 from src.domain.entities import UserDomain
 from src.infrastructure.database.orm import UserORM
-from src.models import User
+
+TModel = TypeVar("TModel")
+TEntity = TypeVar("TEntity", bound=BaseModel)
 
 
-class Repository[T](ABC):
-    @abstractmethod
-    async def add_one(self, data: dict) -> T:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def find_one(self, **filter_by) -> T | None:
-        raise NotImplementedError
-
-
-class SQLAlchemyRepository[T](Repository[T]):
-    model: type[T]
+class SQLAlchemyRepository(AbstractRepository[TEntity], Generic[TModel, TEntity]):
+    model: Type[TModel]
+    entity: Type[TEntity]
 
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def add_one(self, data: dict) -> T:
-        statement = self.model(**data)
+    async def add_one(self, data: TEntity) -> TEntity:
+        data_dict = data.model_dump(exclude={"id", "created_at", "updated_at"})
+        statement = self.model(**data_dict)
+
         self.session.add(statement)
         await self.session.flush()
-        await self.session.refresh(statement)
-        return statement
 
-    async def find_one(self, **filter_by) -> T | None:
+        data.id = statement.id
+        return data
+
+    async def find_one(self, **filter_by) -> TEntity | None:
         statement = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(statement)
-        return result.scalar_one_or_none()
+        orm_obj = result.scalar_one_or_none()
 
-
-class UserRepository(SQLAlchemyRepository[User]):
-    model = User
-
-    async def get_by_phone(self, phone: str) -> UserDomain | None:
-        statement = select(self.model).filter_by(phone_number=phone)
-        result = await self.session.execute(statement)
-        orm_user = result.scalar_one_or_none()
-
-        if not orm_user:
+        if not orm_obj:
             return None
 
-        return UserDomain.model_validate(orm_user, from_attributes=True)
+        return self.entity.model_validate(orm_obj)
 
-    async def add_one(self, user: UserDomain) -> UserDomain:
-        user_data = user.model_dump(exclude={"id", "created_at", "updated_at"})
-        orm_model = UserORM(**user_data)
-        self.session.add(orm_model)
-        await self.session.flush()
 
-        user.id = orm_model.id
-        return user
+class UserRepository(SQLAlchemyRepository[UserORM, UserDomain], AbstractUserRepository):
+    model = UserORM
+    entity = UserDomain
+
+    async def get_by_phone(self, phone: str) -> UserDomain | None:
+        return await self.find_one(phone_number=phone)

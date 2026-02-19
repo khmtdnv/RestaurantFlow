@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 
-from src.routers import users
+from src.presentation.api.routers import router as users_router
 
 app = FastAPI(title="RestaurantFlow")
 
 # Подключаем роутеры
-app.include_router(users.router)
+app.include_router(users_router)

@@ -1,31 +1,40 @@
 from abc import ABC, abstractmethod
-from typing import Type
+from typing import Generic, TypeVar
 
-from src.database import async_session_factory
-from src.infrastructure.repositories import UserRepository
+from src.domain.entities import UserDomain
+
+TEntity = TypeVar("TEntity")
 
 
-class UnitOfWork:
-    def __init__(self):
-        self.session_factory = async_session_factory
+class AbstractRepository(ABC, Generic[TEntity]):
+    @abstractmethod
+    async def add_one(self, entity: TEntity) -> TEntity:
+        raise NotImplementedError
 
-    async def __aenter__(self):
-        self.session = self.session_factory()
+    @abstractmethod
+    async def find_one(self, **filter_by) -> TEntity | None:
+        raise NotImplementedError
 
-        self.users = UserRepository(self.session)
 
+class AbstractUserRepository(AbstractRepository[UserDomain]):
+    @abstractmethod
+    async def get_by_phone(self, phone: str) -> UserDomain | None:
+        raise NotImplementedError
+
+
+class AbstractUnitOfWork(ABC):
+    users: AbstractUserRepository
+
+    async def __aenter__(self) -> "AbstractUnitOfWork":
         return self
 
     async def __aexit__(self, *args):
         await self.rollback()
-        await self.session.close()
 
+    @abstractmethod
     async def commit(self):
-        await self.session.commit()
+        raise NotImplementedError
 
+    @abstractmethod
     async def rollback(self):
-        await self.session.rollback()
-
-
-async def get_uow() -> UnitOfWork:
-    return UnitOfWork()
+        raise NotImplementedError

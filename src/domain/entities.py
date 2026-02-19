@@ -1,17 +1,21 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class UserDomain(BaseModel):
+
     id: Optional[int] = None
     name: str
     phone_number: str
-    is_active: bool = True
-    is_superuser: bool = False
-    is_phone_verified: bool = False
+    is_active: Optional[bool] = True
+    is_superuser: Optional[bool] = False
+    is_phone_verified: Optional[bool] = False
     created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
     # Бизнес-логика находится прямо в модели
     def verify_phone(self):

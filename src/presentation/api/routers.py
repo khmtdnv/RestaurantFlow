@@ -1,30 +1,30 @@
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.application.interfaces import AbstractUnitOfWork
 from src.application.use_cases import RegisterUserUseCase
-from src.schemas import UserCreate, UserRead
-from src.uow import UnitOfWork, get_uow
+from src.infrastructure.uow import SQLAlchemyUnitOfWork
+from src.presentation.api.schemas import UserCreate, UserRead
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
+async def get_uow() -> AbstractUnitOfWork:
+    return SQLAlchemyUnitOfWork()
+
+
 async def get_register_user_use_case(
-    uow: UnitOfWork = Depends(get_uow),
+    uow: AbstractUnitOfWork = Depends(get_uow),
 ) -> RegisterUserUseCase:
     return RegisterUserUseCase(uow)
 
 
 @router.post("/", response_model=UserRead)
-async def register_user(user: UserCreate, uow: UnitOfWork = Depends(get_uow)):
-    async with uow:
-        existing_user = await uow.users.get_by_phone(phone=user.phone_number)
-        if existing_user:
-            raise HTTPException(
-                status_code=400,
-                detail="Пользователь с таким номером телефона уже существует",
-            )
-
-        user_dict = user.model_dump()
-        created_user = await uow.users.add_one(user_dict)
-        await uow.commit()
-
+async def register_user(
+    user: UserCreate,
+    use_case: RegisterUserUseCase = Depends(get_register_user_use_case),
+):
+    try:
+        created_user = await use_case.execute(name=user.name, phone=user.phone_number)
         return created_user
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
