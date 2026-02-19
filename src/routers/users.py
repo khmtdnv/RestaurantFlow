@@ -17,7 +17,7 @@ async def register_user(user: UserCreate, uow: UnitOfWork = Depends(get_uow)):
             )
 
         user_dict = user.model_dump()
-        user = await uow.users.add_one(user_dict)
+        created_user = await uow.users.add_one(user_dict)
         await uow.commit()
 
-        return user
+        return created_user
