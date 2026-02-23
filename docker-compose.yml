@@ -1,9 +1,9 @@
 services:
-  restaurant-db:
+  psql:
     image: postgres:15-alpine
-    container_name: restaurant-db
+    container_name: psql
     volumes:
-      - restaurant-postgres-data:/var/lib/postgresql/data
+      - psql-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U restaurant_user -d restaurant_db"]
       interval: 5s
@@ -14,8 +14,8 @@ services:
     build:
       context: .
     depends_on:
-      restaurant-db:
+      psql:
         condition: service_healthy
 
 volumes:
-  restaurant-postgres-data:
+  psql-data:

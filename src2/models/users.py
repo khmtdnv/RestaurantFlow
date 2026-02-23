@@ -1,3 +1,20 @@
+# from sqlalchemy.orm import Mapped, mapped_column
+
+# from db.db import Base
+# from schemas.users import UserSchema
+
+
+# class Users(Base):
+#     __tablename__ = "users"
+
+#     id: Mapped[int] = mapped_column(primary_key=True)
+#     name: Mapped[str]
+
+#     def to_read_model(self) -> UserSchema:
+#         return UserSchema(
+#             id=self.id,
+#             name=self.name,
+#         )
 import datetime
 from typing import Annotated, Optional
 
@@ -19,7 +36,7 @@ updated_at = Annotated[
 ]
 
 
-class UserORM(Base):
+class Users(Base):
     __tablename__ = "users"
 
     id: Mapped[intpk]
@@ -34,15 +51,3 @@ class UserORM(Base):
     )
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
-
-
-class PhoneVerificationORM(Base):
-    __tablename__ = "phone_verifications"
-
-    id: Mapped[intpk]
-    phone_number: Mapped[str] = mapped_column(nullable=False)
-    code: Mapped[str] = mapped_column(nullable=False)
-    is_used: Mapped[bool] = mapped_column(default=False, nullable=False)
-    expires_at: Mapped[datetime.datetime] = mapped_column(nullable=False)
-    attempts_count: Mapped[int]
-    max_attempts: Mapped[int]

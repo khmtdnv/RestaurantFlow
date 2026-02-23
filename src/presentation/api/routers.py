@@ -3,29 +3,38 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from src.application.dto import UserCreateDTO, UserDTO
-from src.application.interfaces import AbstractUnitOfWork
-from src.application.use_cases import RegisterUserUseCase, VerifyPhoneUseCase
+from src.application.interfaces import AbstractSMSService, AbstractUnitOfWork
+from src.application.use_cases import (
+    AuthenticateUserUseCase,
+    RegisterUserUseCase,
+    SendVerificationCodeUseCase,
+)
 from src.config import settings
 from src.domain.entities import UserDomain
+from src.infrastructure.services.sms import (  # Твой сервис отправки СМС (название может чуть отличаться)
+    DummySMSService,
+)
 from src.infrastructure.uow import SQLAlchemyUnitOfWork
-from src.presentation.api.schemas import UserCreate, UserRead, VerifyCodeRequest
+from src.presentation.api.schemas import (
+    PhoneRequest,
+    ResendCodeRequest,
+    UserCreate,
+    UserRead,
+    VerifyCodeRequest,
+)
 
 user_router = APIRouter(prefix="/users", tags=["Users"])
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
 async def get_uow() -> AbstractUnitOfWork:
     return SQLAlchemyUnitOfWork()
 
 
-async def get_current_user(
-    token: str = Depends(oauth2_scheme), uow: AbstractUnitOfWork = Depends(get_uow)
-):
+async def get_current_user(token: str, uow: AbstractUnitOfWork = Depends(get_uow)):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        user_id: str = payload.get("sub")
+        user_id: str = payload.get("sub")  # type: ignore
         if user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     except jwt.PyJWTError:
@@ -40,16 +49,47 @@ async def get_current_user(
         return user
 
 
+async def get_current_admin_user(current_user: UserDomain = Depends(get_current_user)):
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Not enough privileges")
+    return current_user
+
+
 async def get_register_user_use_case(
     uow: AbstractUnitOfWork = Depends(get_uow),
 ) -> RegisterUserUseCase:
     return RegisterUserUseCase(uow)
 
 
-async def get_verify_phone_use_case(
+async def get_authenticate_user_use_case(
     uow: AbstractUnitOfWork = Depends(get_uow),
-) -> VerifyPhoneUseCase:
-    return VerifyPhoneUseCase(uow)
+) -> AuthenticateUserUseCase:
+    return AuthenticateUserUseCase(uow)
+
+
+async def get_sms_service() -> AbstractSMSService:
+    return DummySMSService()  # Подставляем реализацию сервиса СМС
+
+
+async def get_send_verification_code_use_case(
+    uow: AbstractUnitOfWork = Depends(get_uow),
+    sms_service: AbstractSMSService = Depends(get_sms_service),
+) -> SendVerificationCodeUseCase:
+    return SendVerificationCodeUseCase(uow, sms_service)
+
+
+@auth_router.post("/resend-code")
+async def resend_code(
+    data: ResendCodeRequest,
+    use_case: SendVerificationCodeUseCase = Depends(
+        get_send_verification_code_use_case
+    ),
+):
+    try:
+        await use_case.execute(phone_number=data.phone_number)
+        return {"status": "ok", "message": "Новый код подтверждения успешно отправлен"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @user_router.get("/me")
@@ -71,13 +111,28 @@ async def register_user(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@auth_router.post("/send-code")
+async def send_auth_code(
+    data: PhoneRequest,
+    use_case: SendVerificationCodeUseCase = Depends(
+        get_send_verification_code_use_case
+    ),
+):
+    try:
+
+        await use_case.execute(phone_number=data.phone_number)
+        return {"status": "ok", "message": "Код отправлен"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @auth_router.post("/verify-code")
 async def verify_code(
     data: VerifyCodeRequest,
-    use_case: VerifyPhoneUseCase = Depends(get_verify_phone_use_case),
+    use_case: AuthenticateUserUseCase = Depends(get_authenticate_user_use_case),
 ):
     try:
-        await use_case.execute(phone_number=data.phone_number, code=data.code)
-        return {"status": "ok", "message": "Номер подтвержден"}
+        tokens = await use_case.execute(phone_number=data.phone_number, code=data.code)
+        return tokens
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

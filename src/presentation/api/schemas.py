@@ -36,3 +36,11 @@ class TokenPair(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "Bearer"
+
+
+class PhoneRequest(BaseModel):
+    phone_number: str
+
+
+class ResendCodeRequest(BaseModel):
+    phone_number: str

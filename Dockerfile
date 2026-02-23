@@ -1,4 +1,4 @@
-FROM python:3.13-slim as builder
+FROM python:3.13-slim AS builder
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl build-essential && \
@@ -18,7 +18,7 @@ RUN poetry install --only main --no-interaction --no-ansi --no-root
 # -------------------------------------------------------------------------
 # Stage 2: Development
 # -------------------------------------------------------------------------
-FROM builder as dev
+FROM builder AS dev
 
 # Доустанавливаем dev-зависимости
 RUN poetry install --only dev --no-interaction --no-ansi --no-root
@@ -34,7 +34,7 @@ CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload
 # -------------------------------------------------------------------------
 # Stage 3: Production
 # -------------------------------------------------------------------------
-FROM python:3.13-slim as prod
+FROM python:3.13-slim AS prod
 
 WORKDIR /app
 
