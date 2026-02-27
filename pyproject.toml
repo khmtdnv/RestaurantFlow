@@ -32,5 +32,5 @@ skip_glob = []
 
 [tool.flake8]
 max-line-length = 88
-exclude = [".venv", "./services/ms_auth/src/migrations/*"]
+exclude = [".venv", "services/ms_auth/src/migrations/*"]
 extend-ignore = ["E203", "E501", "W503", "W504", "F405", "F403", "F401"]
