@@ -28,7 +28,7 @@ force-exclude = '''
 [tool.isort]
 profile = "black"
 line_length = 88
-skip_glob = []
+skip_glob = ["services/ms_auth/src/migrations/*"]
 
 [tool.flake8]
 max-line-length = 88
