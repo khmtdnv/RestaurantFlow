@@ -21,14 +21,14 @@ line-length = 88
 target-version = ['py311']
 force-exclude = '''
 /(
-    services/ms_auth/src/migrations/.*
+    services/ms_auth/src/migrations/*
 )/
 '''
 
 [tool.isort]
 profile = "black"
 line_length = 88
-skip_glob = ["services/ms_auth/src/migrations/.*"]
+skip_glob = []
 
 [tool.flake8]
 max-line-length = 88
