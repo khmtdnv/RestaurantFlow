@@ -1,7 +1,7 @@
 """init
 
 Revision ID: caeffe88e081
-Revises: 
+Revises:
 Create Date: 2026-02-27 19:30:40.937856
 
 """
