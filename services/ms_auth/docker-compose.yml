@@ -1,0 +1,37 @@
+services:
+  psql:
+    image: postgres:15-alpine
+    container_name: psql
+    volumes:
+      - psql-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U restaurant_user -d restaurant_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      target: prod
+    container_name: api
+    depends_on:
+      psql:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+volumes:
+  psql-data:
+  redis-data:
+    driver: local

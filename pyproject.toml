@@ -17,7 +17,8 @@ dependencies = [
     "uvicorn (>=0.40.0,<0.41.0)",
     "psycopg (>=3.3.2,<4.0.0)",
     "bcrypt (>=5.0.0,<6.0.0)",
-    "pyjwt (>=2.11.0,<3.0.0)"
+    "pyjwt (>=2.11.0,<3.0.0)",
+    "redis (>=7.2.0,<8.0.0)"
 ]
 
 
@@ -37,9 +38,9 @@ dev = [
 [tool.black]
 line-length = 88
 target-version = ['py311']
-extend-exclude = '''
+force-exclude = '''
 /(
-
+    services/ms_auth/src/migrations/.*
 )/
 '''
 
@@ -50,6 +51,6 @@ skip_glob = []
 
 [tool.flake8]
 max-line-length = 88
-exclude = [".venv"]
+exclude = [".venv", "services/ms_auth/src/migrations/versions/64b79afbc9f7_.py"]
 extend-ignore = ["E203", "E501", "W503", "W504", "F405", "F403", "F401"]
 
