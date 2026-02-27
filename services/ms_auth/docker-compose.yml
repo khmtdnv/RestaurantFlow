@@ -1,37 +1,45 @@
 services:
-  psql:
-    image: postgres:15-alpine
-    container_name: psql
+  web:
+    build: .
+    container_name: web
     volumes:
-      - psql-data:/var/lib/postgresql/data
+      - .:/app
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env.dev
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    container_name: db
+    ports:
+      - "5433:5432"
+    env_file:
+      - .env.dev
+    volumes:
+      - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U restaurant_user -d restaurant_db"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
       timeout: 5s
       retries: 5
 
-  api:
-    build:
-      context: .
-      target: prod
-    container_name: api
-    depends_on:
-      psql:
-        condition: service_healthy
-    ports:
-      - "8000:8000"
-
-  redis:
+  cache:
+    container_name: cache
     image: redis:7-alpine
-    container_name: redis
-    ports:
-      - "6380:6379"
     volumes:
-      - redis-data:/data
-    command: redis-server --appendonly yes
-    restart: unless-stopped
+      - cache_data:/cache_data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  psql-data:
-  redis-data:
-    driver: local
+  db_data:
+  cache_data:
