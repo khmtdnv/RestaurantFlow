@@ -1,14 +1,15 @@
 from abc import ABC, abstractmethod
 from typing import Type
 
-from db.db import async_session_factory
 from repositories.categories import CategoriesRepository
 from repositories.dishes import DishesRepository
 
+from services.ms_menu.src.db.database import async_session_factory
+
 
 class IUnitOfWork(ABC):
-    dishes: Type[DishesRepository]
-    categories: Type[CategoriesRepository]
+    dishes: DishesRepository
+    categories: CategoriesRepository
 
     @abstractmethod
     def __init__(self):
@@ -37,9 +38,15 @@ class UnitOfWork:
 
     async def __aenter__(self):
         self.session = self.async_session_factory()
+        self.categories = CategoriesRepository(self.session)
+        self.dishes = DishesRepository(self.session)
+        return self
 
-    async def __aexit__(self, *args):
-        await self.rollback()
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            await self.rollback()
+        else:
+            await self.commit()
         await self.session.close()
 
     async def commit(self):

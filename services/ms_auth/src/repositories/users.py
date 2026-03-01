@@ -1,5 +1,4 @@
 from models.users import Users
-from sqlalchemy import select, update
 from utils.repository import SQLAlchemyRepository
 
 

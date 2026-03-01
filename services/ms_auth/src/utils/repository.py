@@ -29,6 +29,8 @@ class AbstractRepository(ABC):
 class SQLAlchemyRepository(AbstractRepository):
     """
     Жизненный цикл любого запроса в БД с помощью SQLAlchemy
+
+    - CORE STYLE
     1) Statement
         CREATE = insert(self.model).values(...)
         READ = select(self.model).where(...)
@@ -37,6 +39,18 @@ class SQLAlchemyRepository(AbstractRepository):
     2) Execution
         session.execute(statement)
     3) Processing
+
+    - ORM STYLE
+    1) Создаем объект модели из словаря data: dict
+        object = self.model(**data)
+    2) Добавляем объект в сессию
+        self.session.add(object)
+    3) Синхронизируем с БД, чтобы получить ID
+        await self.session.flush()
+    4) (Опционально)
+        await self.session.refresh(object)
+    5)
+        return object
     """
 
     model = None
