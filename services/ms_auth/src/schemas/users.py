@@ -1,7 +1,22 @@
-import datetime
 from typing import Any
 
 from pydantic import BaseModel
+
+
+class EditUserRequestDTO(BaseModel):
+    id: int
+    name: str | None
+    phone_number: str | None
+
+
+class EditUserResponseDTO(BaseModel):
+    status: str
+    message: str
+
+
+class UserProfileUpdate(BaseModel):
+    name: str | None
+    phone_number: str | None
 
 
 class UserSchema(BaseModel):

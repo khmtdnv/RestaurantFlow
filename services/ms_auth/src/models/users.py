@@ -1,20 +1,3 @@
-# from sqlalchemy.orm import Mapped, mapped_column
-
-# from db.db import Base
-# from schemas.users import UserSchema
-
-
-# class Users(Base):
-#     __tablename__ = "users"
-
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     name: Mapped[str]
-
-#     def to_read_model(self) -> UserSchema:
-#         return UserSchema(
-#             id=self.id,
-#             name=self.name,
-#         )
 import datetime
 from typing import Annotated, Optional
 
@@ -51,10 +34,3 @@ class Users(Base):
     )
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
-
-    def to_read_model(self) -> UserSchema:
-        return UserSchema(
-            id=self.id,
-            name=self.name,
-            phone_number=self.phone_number,
-        )
