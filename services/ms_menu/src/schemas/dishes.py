@@ -7,14 +7,27 @@ class DishBase(BaseModel):
     name: str
     price: Decimal
     description: str | None = None
-
+    is_available: bool
+    category_id: int
     model_config = ConfigDict(from_attributes=True)
 
 
 class DishCreateIn(DishBase):
-    category_id: int
+    pass
+
+
+class DishUpdateIn(BaseModel):
+    name: str | None = None
+    price: Decimal | None = None
+    description: str | None = None
+    is_available: bool | None = None
+    category_id: int | None = None
 
 
 class DishOut(DishBase):
     id: int
-    category_id: int
+
+
+class HTTPResponse(BaseModel):
+    status: str
+    message: str

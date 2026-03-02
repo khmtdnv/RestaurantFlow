@@ -17,6 +17,10 @@ class CategoryCreateIn(CategoryBase):
     pass
 
 
+class CategoryUpdateIn(BaseModel):
+    name: str | None = None
+
+
 class CategoryOut(CategoryBase):
     id: int
     created_at: datetime.datetime
@@ -27,4 +31,6 @@ class CategoryWithDishesOut(CategoryOut):
     dishes: list["DishOut"]
 
 
-CategoryWithDishesOut.model_rebuild()
+class HTTPResponse(BaseModel):
+    status: str
+    message: str

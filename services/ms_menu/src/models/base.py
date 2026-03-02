@@ -25,12 +25,13 @@ class TimestampMixin:
     updated_at: Mapped[updated_at]
 
 
-metadata_obj = MetaData(schema="menu")
+# metadata_obj = MetaData(schema="menu")
 
 
 class Base(DeclarativeBase):
     repr_cols_num = 3
     repr_cols = tuple()
+    # metadata = metadata_obj
 
     def __repr__(self):
         cols = []

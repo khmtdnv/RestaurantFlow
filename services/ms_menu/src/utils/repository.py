@@ -36,17 +36,21 @@ class SQLAlchemyRepository(AbstractRepository):
         self.session.add(obj)
 
     async def get_by_id(self, obj_id: int):
-        return await self.session.get(self.model, obj_id)
+        return await self.session.get(self.model, obj_id)  # type: ignore
 
     async def get_one(self, **filters):
-        statement = select(self.model).filter_by(**filters)
+        statement = select(self.model).filter_by(**filters)  # type: ignore
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
     async def get_all(self):
-        statement = select(self.model)
+        statement = select(self.model)  # type: ignore
         result = await self.session.execute(statement)
         return result.scalars().all()
 
     async def delete(self, obj):
         await self.session.delete(obj)
+
+    def update(self, obj, **kwargs):
+        for key, value in kwargs.items():
+            setattr(obj, key, value)

@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import Type
 
+from db.database import async_session_factory
 from repositories.categories import CategoriesRepository
 from repositories.dishes import DishesRepository
-
-from services.ms_menu.src.db.database import async_session_factory
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class IUnitOfWork(ABC):
+    session: AsyncSession
     dishes: DishesRepository
     categories: CategoriesRepository
 

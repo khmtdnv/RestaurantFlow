@@ -19,4 +19,5 @@ class Dishes(TimestampMixin, Base):
         ForeignKey("categories.id", ondelete="CASCADE"),
         nullable=False,
     )
+    is_available: Mapped[bool] = mapped_column(server_default="True")
     category: Mapped["Categories"] = relationship(back_populates="dishes")

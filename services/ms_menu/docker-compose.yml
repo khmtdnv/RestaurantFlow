@@ -1,24 +1,20 @@
 services:
   web:
     build: .
-    container_name: web
     volumes:
       - .:/app
     ports:
-      - "8001:8000"
+      - "8002:8000"
     env_file:
       - .env.dev
     depends_on:
       db:
         condition: service_healthy
-      cache:
-        condition: service_healthy
 
   db:
     image: postgres:15-alpine
-    container_name: db
     ports:
-      - "5433:5432"
+      - "5434:5432"
     env_file:
       - .env.dev
     volumes:
@@ -29,17 +25,16 @@ services:
       timeout: 5s
       retries: 5
 
-  cache:
-    container_name: cache
-    image: redis:7-alpine
-    volumes:
-      - cache_data:/cache_data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # cache:
+  #   image: redis:7-alpine
+  #   volumes:
+  #     - cache_data:/cache_data
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
 volumes:
   db_data:
-  cache_data:
+  # cache_data:
