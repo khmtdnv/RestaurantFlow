@@ -1,10 +1,7 @@
 import datetime
-from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict
-
-if TYPE_CHECKING:
-    from schemas.dishes import DishOut
+from schemas.dishes import DishOut
 
 
 class CategoryBase(BaseModel):
@@ -28,9 +25,11 @@ class CategoryOut(CategoryBase):
 
 
 class CategoryWithDishesOut(CategoryOut):
-    dishes: list["DishOut"]
+    dishes: list[DishOut]
 
 
-class HTTPResponse(BaseModel):
-    status: str
-    message: str
+class MenuOut(BaseModel):
+    categories: list[CategoryWithDishesOut]
+    uncategorized_dishes: list[DishOut]
+
+    model_config = ConfigDict(from_attributes=True)

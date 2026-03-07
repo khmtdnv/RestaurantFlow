@@ -1,6 +1,7 @@
 .vscode
 .env.prod
 .env.dev
+services/ms_menu/etc
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 

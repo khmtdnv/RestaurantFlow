@@ -1,4 +1,8 @@
+import logging
+
 from models.categories import Categories
+from redis.asyncio import Redis
+from schemas.categories import MenuOut
 from utils.unitofwork import IUnitOfWork
 
 
@@ -10,6 +14,30 @@ class CategoriesService:
         async with self.uow:
             categories = await self.uow.categories.get_all()
             return categories
+
+    async def get_menu(self, redis: Redis):
+        cache = await redis.get("menu:full")
+        if cache:
+            logging.info("Меню взято из кэша")
+            menu_scheme = MenuOut.model_validate_json(cache)
+            return menu_scheme
+
+        async with self.uow:
+            categories_with_dishes = (
+                await self.uow.categories.get_categories_with_active_dishes()
+            )
+            dishes_wo_categories = await self.uow.dishes.get_all(
+                category_id=None,
+                is_available=True,
+            )
+            menu_scheme = MenuOut(
+                categories=categories_with_dishes,  # type:ignore
+                uncategorized_dishes=dishes_wo_categories,  # type:ignore
+            )
+            menu_json_string = menu_scheme.model_dump_json()
+            await redis.set("menu:full", value=menu_json_string, ex=3600)
+            logging.info("Поместили меню в кэш")
+            return menu_scheme
 
     async def add_category(self, name: str):
         async with self.uow:

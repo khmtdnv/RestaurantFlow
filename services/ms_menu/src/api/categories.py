@@ -1,17 +1,17 @@
-from api.dependencies import UOWDependency
-from fastapi import APIRouter
+from api.dependencies import RedisDependency, UOWDependency
+from fastapi import APIRouter, status
 from schemas.categories import (
     CategoryCreateIn,
     CategoryOut,
     CategoryUpdateIn,
-    HTTPResponse,
+    MenuOut,
 )
 from services.categories import CategoriesService
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
 
 
-@router.get("", response_model=list[CategoryOut])
+@router.get("", response_model=list[CategoryOut], status_code=status.HTTP_200_OK)
 async def get_categories(
     uow: UOWDependency,
 ):
@@ -20,20 +20,27 @@ async def get_categories(
     return categories
 
 
-@router.post("", response_model=HTTPResponse)
+@router.get("/menu", response_model=MenuOut, status_code=status.HTTP_200_OK)
+async def get_menu(
+    uow: UOWDependency,
+    redis: RedisDependency,
+):
+    service = CategoriesService(uow)
+    menu = await service.get_menu(redis)
+    return menu
+
+
+@router.post("", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
 async def add_category(
     uow: UOWDependency,
     request_data: CategoryCreateIn,
 ):
     service = CategoriesService(uow)
-    category = await service.add_category(name=request_data.name)
-    return HTTPResponse(
-        status="success",
-        message=f"Создана новая категория '{category.name}'",
-    )
+    new_catgory = await service.add_category(name=request_data.name)
+    return new_catgory
 
 
-@router.get("/{id}", response_model=CategoryOut)
+@router.get("/{id}", response_model=CategoryOut, status_code=status.HTTP_200_OK)
 async def get_category(
     id: int,
     uow: UOWDependency,
@@ -43,7 +50,7 @@ async def get_category(
     return category
 
 
-@router.patch("/{id}", response_model=HTTPResponse)
+@router.patch("/{id}", response_model=CategoryOut, status_code=status.HTTP_200_OK)
 async def update_category(
     id: int,
     uow: UOWDependency,
@@ -51,21 +58,15 @@ async def update_category(
 ):
     service = CategoriesService(uow)
     update_data = request_data.model_dump(exclude_none=True)
-    category = await service.update_category(id=id, update_data=update_data)
-    return HTTPResponse(
-        status="success",
-        message=f"Обновлена категория '{category.name}'",
-    )
+    updated_category = await service.update_category(id=id, update_data=update_data)
+    return updated_category
 
 
-@router.delete("/{id}", response_model=HTTPResponse)
+@router.delete("/{id}", response_model=CategoryOut, status_code=status.HTTP_200_OK)
 async def delete_category(
     id: int,
     uow: UOWDependency,
 ):
     service = CategoriesService(uow)
-    category = await service.delete_category(id=id)
-    return HTTPResponse(
-        status="success",
-        message=f"Удалена категория '{category.name}'",
-    )
+    deleted_category = await service.delete_category(id=id)
+    return deleted_category

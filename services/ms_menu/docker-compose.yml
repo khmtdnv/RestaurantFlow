@@ -10,6 +10,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      cache:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
 
   db:
     image: postgres:15-alpine
@@ -25,16 +29,37 @@ services:
       timeout: 5s
       retries: 5
 
-  # cache:
-  #   image: redis:7-alpine
-  #   volumes:
-  #     - cache_data:/cache_data
-  #   healthcheck:
-  #     test: ["CMD", "redis-cli", "ping"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
+  cache:
+    image: redis:7-alpine
+    volumes:
+      - cache_data:/cache_data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  broker:
+    image: rabbitmq:4-management
+    env_file:
+      - .env.dev
+    volumes:
+      - rabbitmq_conf:/etc/rabbitmq/
+      - rabbitmq_data:/var/lib/rabbitmq/
+      - rabbitmq_logs:/var/log/rabbitmq/
+    ports:
+      - 5672:5672
+      - 15672:15672
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 20s
+      retries: 5
+
 
 volumes:
   db_data:
-  # cache_data:
+  cache_data:
+  rabbitmq_conf:
+  rabbitmq_data:
+  rabbitmq_logs:
