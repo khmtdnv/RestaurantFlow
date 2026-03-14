@@ -10,7 +10,7 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_id(self, obj_id):
+    async def get_by_id(self, obj_id: int):
         raise NotImplementedError
 
     @abstractmethod
@@ -18,11 +18,15 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_all(self):
+    async def get_all(self, **filters):
         raise NotImplementedError
 
     @abstractmethod
     async def delete(self, obj):
+        raise NotImplementedError
+
+    @abstractmethod
+    def update(self, obj):
         raise NotImplementedError
 
 
@@ -42,6 +46,12 @@ class SQLAlchemyRepository(AbstractRepository):
         statement = select(self.model).filter_by(**filters)  # type: ignore
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
+
+    async def get_objects(self, ids: list[int]):
+        statement = select(self.model).where(self.model.id.in_(ids))  # type: ignore
+        result = await self.session.execute(statement)
+        result = list(result.scalars().all())
+        return result
 
     async def get_all(self, **filters):
         statement = select(self.model).filter_by(**filters)  # type: ignore

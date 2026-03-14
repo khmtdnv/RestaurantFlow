@@ -3,9 +3,8 @@ from logging.config import fileConfig
 
 from alembic import context
 from config import settings
-from models.base import Base
-from models.categories import Categories
-from models.dishes import Dishes
+from db.database import Base
+from models import *
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
