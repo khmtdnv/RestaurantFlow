@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     RABBITMQ_PASS: str
     REDIS_HOST: str
     REDIS_PORT: int
+    MINIO_HOST: str
+    MINIO_PORT: int
+    MINIO_ROOT_USER: str
+    MINIO_ROOT_PASSWORD: str
 
     @property
     def DATABASE_URL(self):
@@ -35,6 +39,18 @@ class Settings(BaseSettings):
     def REDIS_URL(self):
         # REDIS_URL = "redis://cache:6379/0"
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+
+    @property
+    def MINIO_URL(self):
+        return f"{self.MINIO_HOST}:{self.MINIO_PORT}"
+
+    @property
+    def MINIO_ACCESS_KEY(self):
+        return self.MINIO_ROOT_USER
+
+    @property
+    def MINIO_SECRET_KEY(self):
+        return self.MINIO_ROOT_PASSWORD
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env.dev",

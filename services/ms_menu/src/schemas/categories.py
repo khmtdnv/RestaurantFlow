@@ -1,7 +1,6 @@
 import datetime
 
 from pydantic import BaseModel, ConfigDict
-from schemas.dishes import DishOut
 
 
 class CategoryBase(BaseModel):
@@ -24,12 +23,19 @@ class CategoryOut(CategoryBase):
     updated_at: datetime.datetime | None
 
 
-class CategoryWithDishesOut(CategoryOut):
-    dishes: list[DishOut]
-
-
-class MenuOut(BaseModel):
-    categories: list[CategoryWithDishesOut]
-    uncategorized_dishes: list[DishOut]
+class MenuCategoryOut(BaseModel):
+    id: int
+    name: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# class CategoryWithDishesOut(CategoryOut):
+#     dishes: list[DishOutWithTags]
+
+
+# class MenuOut(BaseModel):
+#     available_categorized_dishes: list[CategoryWithDishesOut]
+#     available_uncategorized_dishes: list[DishOutWithTags]
+
+#     model_config = ConfigDict(from_attributes=True)

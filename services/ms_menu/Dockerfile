@@ -14,6 +14,7 @@ RUN pip install poetry && \
 
 COPY --chown=appuser:appgroup pyproject.toml poetry.lock ./
 
+
 RUN poetry install --no-root
 
 COPY --chown=appuser:appgroup src/ ./src
