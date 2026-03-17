@@ -1,0 +1,54 @@
+services:
+  web:
+    build: .
+    volumes:
+      - .:/app
+    ports:
+      - "8003:8000"
+    env_file:
+      - .env.dev
+    depends_on:
+      db:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    ports:
+      - "5435:5432"
+    env_file:
+      - .env.dev
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  broker:
+    image: rabbitmq:4-management
+    env_file:
+      - .env.dev
+    volumes:
+      - rabbitmq_conf:/etc/rabbitmq/
+      - rabbitmq_data:/var/lib/rabbitmq/
+      - rabbitmq_logs:/var/log/rabbitmq/
+    ports:
+      - 5672:5672
+      - 15672:15672
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 20s
+      retries: 5
+
+
+
+volumes:
+  db_data:
+  rabbitmq_conf:
+  rabbitmq_data:
+  rabbitmq_logs:

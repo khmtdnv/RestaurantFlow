@@ -1,40 +1,26 @@
-# from typing import TYPE_CHECKING
-
-# from db.database import Base, TimestampMixin, id_pk, price
-# from sqlalchemy import ForeignKey, text
-# from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-# if TYPE_CHECKING:
-#     from models.category import Category
-#     from models.combo import Combo
-#     from models.tag import Tag
+from domain.aggregates.order import OrderStatus
+from infrastructure.database.database import Base, numeric_price
+from sqlalchemy import ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
-# class Dish(TimestampMixin, Base):
-#     __tablename__ = "dishes"
+class OrderItemModel(Base):
+    __tablename__ = "order_items"
 
-#     id: Mapped[id_pk]
-#     name: Mapped[str]
-#     price: Mapped[price]
-#     description: Mapped[str | None]
-#     is_available: Mapped[bool] = mapped_column(server_default=text("true"))
-#     image_url: Mapped[str | None]
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
+    dish_id: Mapped[int] = mapped_column()
+    quantity: Mapped[int] = mapped_column()
+    price: Mapped[numeric_price] = mapped_column()
 
-#     # M2O
-#     category_id: Mapped[int | None] = mapped_column(
-#         ForeignKey("categories.id", ondelete="SET NULL"),
-#         nullable=True,
-#     )
-#     category: Mapped["Category | None"] = relationship(
-#         back_populates="dishes", lazy="raise_on_sql"
-#     )
 
-#     # Unidirectional M2M
-#     tags: Mapped[list["Tag"]] = relationship(
-#         secondary="dishes_tags", lazy="raise_on_sql"
-#     )
+class OrderModel(Base):
+    __tablename__ = "orders"
 
-#     # Bidirectional M2M
-#     combos: Mapped[list["Combo"]] = relationship(
-#         secondary="combos_dishes", back_populates="dishes", lazy="raise_on_sql"
-#     )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    status: Mapped[OrderStatus] = mapped_column(String(50))
+    price: Mapped[numeric_price] = mapped_column()
+
+    items: Mapped[list[OrderItemModel]] = relationship(
+        lazy="selectin", cascade="all, delete-orphan"
+    )

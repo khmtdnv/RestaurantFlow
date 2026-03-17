@@ -10,4 +10,4 @@ def get_uow() -> IUnitOfWork:
     return SqlAlchemyUnitOfWork(session_factory=async_session_factory)
 
 
-UOWDependency = Annotated[IUnitOfWork, Depends(SqlAlchemyUnitOfWork)]
+UOWDependency = Annotated[IUnitOfWork, Depends(get_uow)]
