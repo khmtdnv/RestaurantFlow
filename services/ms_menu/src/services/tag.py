@@ -20,6 +20,7 @@ class TagService:
 
     async def get_tags(self):
         async with self.uow:
+            await self._fake()
             tags_orm = await self.uow.tag.get_all()
             return tags_orm
 
@@ -47,31 +48,30 @@ class TagService:
                 raise ValueError("Тэг не найден")
             await self.uow.tag.delete(tag_orm)
 
-    async def fake(self):
-        async with self.uow:
-            for model, data in [
-                (Category, categories_data),
-                (Tag, tags_data),
-                (Dish, dishes_data),
-            ]:
-                stmt = pg_insert(model).values(data)
-                stmt = stmt.on_conflict_do_nothing(index_elements=["id"])
-                await self.uow.session.execute(stmt)
+    async def _fake(self):
+        for model, data in [
+            (Category, categories_data),
+            (Tag, tags_data),
+            (Dish, dishes_data),
+        ]:
+            stmt = pg_insert(model).values(data)
+            stmt = stmt.on_conflict_do_nothing(index_elements=["id"])
+            await self.uow.session.execute(stmt)
 
-            stmt_tags = pg_insert(DishesTags).values(dishes_tags_data)
-            stmt_tags = stmt_tags.on_conflict_do_nothing(
-                index_elements=["dish_id", "tag_id"]
+        stmt_tags = pg_insert(DishesTags).values(dishes_tags_data)
+        stmt_tags = stmt_tags.on_conflict_do_nothing(
+            index_elements=["dish_id", "tag_id"]
+        )
+        await self.uow.session.execute(stmt_tags)
+
+        tables_to_sync = ["categories", "tags", "dishes"]
+        for table_name in tables_to_sync:
+            sync_query = text(
+                f"""
+                SELECT setval(
+                    pg_get_serial_sequence('{table_name}', 'id'),
+                    COALESCE((SELECT MAX(id) FROM {table_name}), 1)
+                );
+            """
             )
-            await self.uow.session.execute(stmt_tags)
-
-            tables_to_sync = ["categories", "tags", "dishes"]
-            for table_name in tables_to_sync:
-                sync_query = text(
-                    f"""
-                    SELECT setval(
-                        pg_get_serial_sequence('{table_name}', 'id'),
-                        COALESCE((SELECT MAX(id) FROM {table_name}), 1)
-                    );
-                """
-                )
-                await self.uow.session.execute(sync_query)
+            await self.uow.session.execute(sync_query)

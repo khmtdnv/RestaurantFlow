@@ -1,0 +1,229 @@
+networks:
+  restaurant_network:
+    driver: bridge
+
+volumes:
+  # ms_auth
+  ms_auth_db_data:
+  ms_auth_cache:
+  # ms_menu
+  ms_menu_db_data:
+  ms_menu_cache:
+  # ms_order
+  ms_order_db_data:
+  # common
+  rabbitmq_data:
+  minio_data:
+
+services:
+  # ==========================================
+  # ИНФРАСТРУКТУРА (Общая)
+  # ==========================================
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: shared_rabbitmq
+    networks:
+      - restaurant_network
+    env_file:
+      - .env
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  s3:
+    image: minio/minio
+    container_name: shared_minio
+    networks:
+      - restaurant_network
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  # ==========================================
+  # MS: AUTH
+  # ==========================================
+  ms_auth_api:
+    build:
+      context: ./services/ms_auth
+      dockerfile: Dockerfile
+    container_name: ms_auth_api
+    volumes:
+      - ./services/ms_auth:/app
+    networks:
+      - restaurant_network
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./services/ms_auth/.env.dev
+    depends_on:
+      ms_auth_db:
+        condition: service_healthy
+
+  ms_auth_db:
+    image: postgres:15-alpine
+    container_name: ms_auth_db
+    networks:
+      - restaurant_network
+    ports:
+      - "5433:5432"
+    env_file:
+      - ./services/ms_auth/.env.dev
+    volumes:
+      - ms_auth_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ms_auth_cache:
+    image: redis:7-alpine
+    container_name: ms_auth_cache
+    networks:
+      - restaurant_network
+    volumes:
+      - ms_auth_cache:/cache_data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # MS: MENU
+  # ==========================================
+  ms_menu_api:
+    build:
+      context: ./services/ms_menu
+      dockerfile: Dockerfile
+    container_name: ms_menu_api
+    networks:
+      - restaurant_network
+    volumes:
+      - ./services/ms_menu:/app
+    ports:
+      - "8002:8000"
+    env_file:
+      - ./services/ms_menu/.env.dev
+    depends_on:
+      ms_menu_db:
+        condition: service_healthy
+      ms_menu_cache:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  ms_menu_worker:
+    build:
+      context: ./services/ms_menu
+      dockerfile: Dockerfile
+    container_name: ms_menu_worker
+    networks:
+      - restaurant_network
+    volumes:
+      - ./services/ms_menu:/app
+    env_file:
+      - ./services/ms_menu/.env.dev
+    depends_on:
+      ms_menu_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    command: ["python", "-m", "worker"]
+
+  ms_menu_db:
+    image: postgres:15-alpine
+    container_name: ms_menu_db
+    networks:
+      - restaurant_network
+    ports:
+      - "5434:5432"
+    env_file:
+      - ./services/ms_menu/.env.dev
+    volumes:
+      - ms_menu_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ms_menu_cache:
+    image: redis:7-alpine
+    container_name: ms_menu_cache
+    networks:
+      - restaurant_network
+    volumes:
+      - ms_menu_cache:/cache_data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # MS: ORDER
+  # ==========================================
+  ms_order_api:
+    build:
+      context: ./services/ms_order
+      dockerfile: Dockerfile
+    container_name: ms_order_api
+    networks:
+      - restaurant_network
+    volumes:
+      - ./services/ms_order:/app
+    ports:
+      - "8003:8000"
+    env_file:
+      - ./services/ms_order/.env.dev
+    depends_on:
+      ms_order_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  ms_order_worker:
+    build:
+      context: ./services/ms_order
+      dockerfile: Dockerfile
+    container_name: ms_order_worker
+    networks:
+      - restaurant_network
+    volumes:
+      - ./services/ms_order:/app
+    env_file:
+      - ./services/ms_order/.env.dev
+    depends_on:
+      ms_menu_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    command: ["python", "-m", "worker"]
+
+  ms_order_db:
+    image: postgres:15-alpine
+    container_name: ms_order_db
+    networks:
+      - restaurant_network
+    ports:
+      - "5435:5432"
+    env_file:
+      - ./services/ms_order/.env.dev
+    volumes:
+      - ms_order_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

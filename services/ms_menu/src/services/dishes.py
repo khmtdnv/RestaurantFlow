@@ -13,25 +13,23 @@ from redis.asyncio import Redis
 from schemas.dishes import DishCreateIn, DishOut, DishUpdateIn
 from schemas.menu import DishFullOut, MenuOut
 from utils.minio import Minio
-from utils.rabbitmq import RabbitMQClient
+from utils.rabbitmq import RabbitMQPublisher
 from utils.unitofwork import IUnitOfWork
 
 logger = logging.getLogger(__name__)
 
 
 class DishService:
-    def __init__(self, uow: IUnitOfWork, broker: RabbitMQClient):
+    def __init__(self, uow: IUnitOfWork, publisher: RabbitMQPublisher):
         self.uow = uow
-        self.broker = broker
+        self.publisher = publisher
         self.redis_key = "menu:full"
         self.bucket_name = "menu-images"
 
     async def _publish_event(self, routing_key: str, payload: dict):
-        headers = {self.broker.retry_header: 0}
-        await self.broker.publish(
+        await self.publisher.publish(
             routing_key=routing_key,
             payload=payload,
-            headers=headers,
         )
         logger.info(f"Создано событие: routing_key = {routing_key}")
 
@@ -98,7 +96,7 @@ class DishService:
             dish_scheme = DishOut.model_validate(dish_orm)
             dish_dict_for_broker = dish_scheme.model_dump(mode="json")
 
-        await self._publish_event("menu.dish.created", dish_dict_for_broker)
+        await self._publish_event("menu.inner.dish.created", dish_dict_for_broker)
 
         return dish_scheme
 
@@ -132,10 +130,12 @@ class DishService:
             dish_dict_for_broker = dish_scheme.model_dump(mode="json")
 
         if old_price != dish_scheme.price:
-            await self._publish_event("menu.price.change", dish_dict_for_broker)
+            await self._publish_event("menu.inner.price.change", dish_dict_for_broker)
 
         if old_availability != dish_scheme.is_available:
-            await self._publish_event("menu.item.availability", dish_dict_for_broker)
+            await self._publish_event(
+                "menu.inner.item.availability", dish_dict_for_broker
+            )
 
         return dish_scheme
 
@@ -152,7 +152,7 @@ class DishService:
             dish_scheme = DishOut.model_validate(dish_orm)
             dish_dict = dish_scheme.model_dump(mode="json")
 
-        await self._publish_event("menu.dish.deleted", dish_dict)
+        await self._publish_event("menu.inner.dish.deleted", dish_dict)
 
         return dish_scheme
 

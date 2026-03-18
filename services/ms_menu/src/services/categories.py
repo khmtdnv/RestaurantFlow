@@ -1,16 +1,16 @@
 import logging
 
 from models import Category
-from utils.rabbitmq import RabbitMQClient
+from utils.rabbitmq import RabbitMQPublisher
 from utils.unitofwork import IUnitOfWork
 
 logger = logging.getLogger(__name__)
 
 
 class CategoriesService:
-    def __init__(self, uow: IUnitOfWork, broker: RabbitMQClient):
+    def __init__(self, uow: IUnitOfWork, publisher: RabbitMQPublisher):
         self.uow = uow
-        self.broker = broker
+        self.publisher = publisher
 
     async def get_categories(self):
         async with self.uow:

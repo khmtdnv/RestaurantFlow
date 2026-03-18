@@ -1,11 +1,16 @@
 from abc import ABC, abstractmethod
 
-from domain.interfaces.repositories import ICartRepository, IOrderRepository
+from domain.interfaces.repositories import (
+    ICartRepository,
+    IItemRepository,
+    IOrderRepository,
+)
 
 
 class IUnitOfWork(ABC):
     order: IOrderRepository
     cart: ICartRepository
+    item: IItemRepository
 
     @abstractmethod
     async def __aenter__(self):

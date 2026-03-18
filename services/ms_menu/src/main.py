@@ -1,57 +1,29 @@
-import asyncio
 import logging
 import time
 from contextlib import asynccontextmanager
 
-from aiormq.exceptions import AMQPConnectionError
 from api.routers import all_routers
+from config import settings
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from utils.rabbitmq import get_rabbitmq_client, message_handler
-from utils.redis import redis_client
+from utils.rabbitmq import get_rabbitmq_publisher
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: --- %(message)s")
 
 
-rabbitmqclient = get_rabbitmq_client()
+rabbitmq_publisher = get_rabbitmq_publisher()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    stop_event = asyncio.Event()
-    max_retries = 5
-    base_delay = 2.0
-
-    for attempt in range(1, max_retries + 1):
-        try:
-            await rabbitmqclient.connect()
-            break
-
-        except AMQPConnectionError as e:
-            if attempt == max_retries:
-                raise e
-
-            delay = base_delay * (2 ** (attempt - 1))
-            await asyncio.sleep(delay)
-
-    bg_task = asyncio.create_task(
-        rabbitmqclient.consume(
-            "menu_cache_invalidation", "menu.#", message_handler, stop_event
-        )
+    await rabbitmq_publisher.connect_and_init(
+        amqp_url=settings.RABBITMQ_URL,
+        exchange_name="ms_menu_exchange",
     )
-    logging.info("Приложение полностью запущено")
+    logging.info("КРОЛИК ЗАПУЩЕН")
     yield
-    logging.info("Плавная остановка приложения")
-    stop_event.set()
-    try:
-        await asyncio.wait_for(bg_task, timeout=3.0)
-    except asyncio.TimeoutError:
-        logging.warning("Воркер не завершился вовремя, принудительная остановка")
-        bg_task.cancel()
-    await redis_client.aclose()
-    await rabbitmqclient.close()
-    logging.info("Приложение полностью остановлено")
+    await rabbitmq_publisher.close()
 
 
 app = FastAPI(title="Ресторан", lifespan=lifespan)

@@ -21,4 +21,5 @@ COPY --chown=appuser:appgroup src/ ./src
 
 USER appuser
 
-CMD ["uvicorn", "main:app", "--app-dir", "src", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+WORKDIR /app/src
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
