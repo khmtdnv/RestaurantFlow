@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
         amqp_url=settings.RABBITMQ_URL,
         exchange_name="ms_menu_exchange",
     )
-    logging.info("КРОЛИК ЗАПУЩЕН")
+    logging.info("ms_menu:RabbitMQ запущен")
     yield
     await rabbitmq_publisher.close()
 
@@ -40,19 +40,19 @@ app.add_middleware(
 )
 
 
-@app.middleware("http")
-async def calculate_request_time(request: Request, call_next):
-    logging.info(f"Запрос пришел на {request.url.path}")
-    start_time = time.time()
+# @app.middleware("http")
+# async def calculate_request_time(request: Request, call_next):
+#     logging.info(f"Запрос пришел на {request.url.path}")
+#     start_time = time.time()
 
-    response = await call_next(request)
+#     response = await call_next(request)
 
-    process_time = time.time() - start_time
-    logging.info(f"Запрос обработан за {process_time} секунд")
+#     process_time = time.time() - start_time
+#     logging.info(f"Запрос обработан за {process_time} секунд")
 
-    response.headers["X-Process-Time"] = str(process_time)
+#     response.headers["X-Process-Time"] = str(process_time)
 
-    return response
+#     return response
 
 
 @app.exception_handler(ValueError)

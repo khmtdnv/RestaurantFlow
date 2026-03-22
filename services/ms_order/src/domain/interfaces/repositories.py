@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from domain.aggregates.cart import Cart
-from domain.aggregates.item import Item
 from domain.aggregates.order import Order
 
 
@@ -30,14 +29,4 @@ class ICartRepository(ABC):
 
     @abstractmethod
     async def update(self, order: Cart) -> None:
-        pass
-
-
-class IItemRepository(ABC):
-    @abstractmethod
-    async def add(self, item: Item) -> Item:
-        pass
-
-    @abstractmethod
-    async def upsert_many(self, items: list[Item]) -> None:
         pass

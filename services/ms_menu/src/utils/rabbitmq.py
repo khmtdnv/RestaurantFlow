@@ -40,6 +40,7 @@ class RabbitMQPublisher:
             delivery_mode=DeliveryMode.PERSISTENT,
         )
         await self._exchange.publish(message, routing_key=routing_key)
+        logger.info(f"ms_menu:сообщение опубликовано {routing_key}")
 
 
 rabbitmq_publisher = RabbitMQPublisher()

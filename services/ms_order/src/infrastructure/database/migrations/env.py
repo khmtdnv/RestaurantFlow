@@ -4,6 +4,7 @@ from logging.config import fileConfig
 from alembic import context
 from config import settings
 from infrastructure.database.database import Base
+from infrastructure.database.models.item import ItemModel
 from infrastructure.database.models.order import OrderItemModel, OrderModel
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection

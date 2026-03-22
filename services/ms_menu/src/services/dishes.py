@@ -180,6 +180,9 @@ class DishService:
 
         return menu_scheme
 
+    # ---------------------------------------------------------------------------
+    # PAGINATED RESPONSES
+
     async def get_menu_offset(self, offset: int, limit: int):
         async with self.uow:
             dishes = await self.uow.dishes.menu_offset(offset, limit)
