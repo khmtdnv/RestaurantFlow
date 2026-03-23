@@ -1,4 +1,4 @@
-from infrastructure.database.models.item import ItemModel
+from infrastructure.database.models.menu_item import MenuItemOrm
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +11,7 @@ class ItemSynchronizer:
         if not items_data:
             return
 
-        stmt = pg_insert(ItemModel).values(items_data)
+        stmt = pg_insert(MenuItemOrm).values(items_data)
         update_stmt = stmt.on_conflict_do_update(
             index_elements=["id"],
             set_={

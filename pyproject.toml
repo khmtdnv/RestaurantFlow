@@ -18,8 +18,9 @@ dev = [
 ]
 
 [tool.black]
-line-length = 88
+line-length = 100
 target-version = ['py311']
+include = '\.pyi?$'
 force-exclude = '''
 /(
     services/ms_auth/src/migrations/*

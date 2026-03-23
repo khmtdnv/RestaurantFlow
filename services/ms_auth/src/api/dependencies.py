@@ -1,26 +1,72 @@
 from typing import Annotated, AsyncGenerator
 
-from fastapi import Depends
+import jwt
+from config import settings
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from redis.asyncio import Redis, from_url
 from utils.unitofwork import IUnitOfWork, UnitOfWork
 
-# В реальном проекте эти данные должны быть в pydantic-settings (.env)
 REDIS_URL = "redis://redis:6379/0"
 
 
 async def get_redis() -> AsyncGenerator[Redis, None]:
-    """
-    Генератор для получения асинхронного клиента Redis.
-    """
-    # Создаем клиент
     client = from_url(REDIS_URL, encoding="utf-8", decode_responses=True)
     try:
-        # Отдаем клиент в сервис или роутер
         yield client
     finally:
-        # Важно: после завершения запроса закрываем соединение
         await client.close()
 
 
 RedisDependency = Annotated[Redis, Depends(get_redis)]
 UOWDependency = Annotated[IUnitOfWork, Depends(UnitOfWork)]
+
+security = HTTPBearer()
+
+
+async def get_token_payload(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> dict:
+    try:
+        payload = jwt.decode(credentials.credentials, settings.SECRET_KEY, algorithms=["HS256"])
+        if payload.get("typ") != "access":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Неверный тип токена. Ожидается access токен.",
+            )
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Токен истек.")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Невалидный токен.")
+
+
+async def get_current_user(
+    uow: UOWDependency,
+    payload: dict = Depends(get_token_payload),
+):
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Токен не содержит sub."
+        )
+
+    async with uow:
+        user = await uow.users.read_one(id=int(user_id))
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Пользователь не найден.",
+            )
+
+        return user
+
+
+async def get_current_admin_user(current_user=Depends(get_current_user)):
+    if getattr(current_user, "is_superuser", False) is False:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Недостаточно прав. Требуется уровень администратора.",
+        )
+    return current_user

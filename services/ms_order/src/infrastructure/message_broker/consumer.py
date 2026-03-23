@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Awaitable, Callable
+from typing import Awaitable, Callable
 
 from aio_pika import ExchangeType, connect_robust
 from aio_pika.abc import (
@@ -8,7 +8,7 @@ from aio_pika.abc import (
     AbstractRobustConnection,
 )
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 # ! Контракт для handler, он может принимать только байты и ничего больше
 MessageHandler = Callable[[bytes], Awaitable[None]]
@@ -24,17 +24,17 @@ class RabbitMQConsumer:
         # ! Устанавливаем соединение и создаем канал
         self._connection = await connect_robust(self._amqp_url)
         self._channel = await self._connection.channel()
-        logger.info("Установлено соединение с RabbitMQ и открыт канал.")
+        log.info("Connection established, channel created.")
 
     async def close(self) -> None:
         # ! Закрываем канал, затем закрываем соединение
         if self._channel and not self._channel.is_closed:
             await self._channel.close()
-            logger.info("AMQP канал закрыт.")
+            log.info("Channel closed.")
 
         if self._connection and not self._connection.is_closed:
             await self._connection.close()
-            logger.info("AMQP соединение закрыто.")
+            log.info("Connection closed.")
 
     async def consume(
         self,
@@ -45,7 +45,7 @@ class RabbitMQConsumer:
         prefetch_count: int = 10,
     ) -> str:
         if not self._channel:
-            raise RuntimeError("Канал не инициализирован")
+            raise RuntimeError("Channel not created.")
 
         await self._channel.set_qos(prefetch_count=prefetch_count)
 
@@ -61,15 +61,13 @@ class RabbitMQConsumer:
                 try:
                     await handler(message.body)
                 except Exception as e:
-                    logger.error(
-                        f"Критическая ошибка обработки {message.message_id}: {e}",
+                    log.error(
+                        f"Message error {message.message_id}: {e}",
                         exc_info=True,
                     )
                     raise
 
         consumer_tag = await queue.consume(_process_message)
-        logger.info(
-            f"Консьюмер подписан на очередь {queue_name} с тегом {consumer_tag}"
-        )
+        log.info(f"Consumer binded to {queue_name} with tag {consumer_tag}")
 
         return consumer_tag

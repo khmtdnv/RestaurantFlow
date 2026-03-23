@@ -1,30 +1,30 @@
 import logging
 
-from application.dto.sync import MenuSyncEventDTO
-from application.use_cases.menu_sync import SyncMenuUseCase
-from infrastructure.database.database import async_session_factory
+from application.dtos.sync import MenuSyncEventDTO
+from application.use_cases.menu.menu_sync import SyncMenuUseCase
+from infrastructure.database.session import async_session_maker
 from pydantic import ValidationError
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
-async def handle_menu_sync_event(
+async def menu_sync_handler(
     payload: bytes,
 ) -> None:
     try:
         event = MenuSyncEventDTO.model_validate_json(payload)
     except ValidationError as e:
-        logger.error(f"Получен невалидный payload. Сообщение дропнуто. Ошибка: {e}")
+        log.error(f"Получен невалидный payload. Сообщение дропнуто. Ошибка: {e}")
         return
 
     items = event.menu
     if not items:
-        logger.warning("Получен пустой payload для синхронизации меню")
+        log.warning("Получен пустой payload для синхронизации меню")
         return
 
-    use_case = SyncMenuUseCase(async_session_factory)
+    use_case = SyncMenuUseCase(async_session_maker)
     try:
         await use_case.execute(items)
     except Exception:
-        logger.error("Внутренняя ошибка при синхронизации меню", exc_info=True)
+        log.error("Внутренняя ошибка при синхронизации меню", exc_info=True)
         raise

@@ -4,19 +4,19 @@ import signal
 
 from config import settings
 from infrastructure.message_broker.consumer import RabbitMQConsumer
-from presentation.amqp.handlers import handle_menu_sync_event
+from presentation.amqp.handlers import menu_sync_handler
+
+from .logging import configure_logging
 
 
 async def main():
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("worker")
+    configure_logging()
+    log = logging.getLogger(__name__)
 
     stop_event = asyncio.Event()
 
     def handle_shutdown_signal():
-        logger.info(
-            "Получен сигнал остановки (SIGINT/SIGTERM). Инициируем Graceful Shutdown..."
-        )
+        log.info("Caught sigint/sigterm. Perfroming shut down.")
         stop_event.set()
 
     loop = asyncio.get_running_loop()
@@ -28,22 +28,22 @@ async def main():
 
     consumer = RabbitMQConsumer(amqp_url=settings.RABBITMQ_URL)
     await consumer.connect()
-    logger.info("Успешное подключение. Начинаем потребление сообщений...")
+    log.info("Rabbitmq connection established. message consuming started.")
 
     try:
         await consumer.consume(
             exchange_name="ms_menu_exchange",
             queue_name="ms_order_sync_queue",
             routing_key="menu.updated",
-            handler=handle_menu_sync_event,
+            handler=menu_sync_handler,
             prefetch_count=10,
         )
         await stop_event.wait()
 
     finally:
-        logger.info("Закрываем AMQP соединения и очищаем ресурсы...")
+        log.info("Closing Rabbimq connection.")
         await consumer.close()
-        logger.info("Воркер остановлен штатно.")
+        log.info("Worker successfully stopped.")
 
 
 if __name__ == "__main__":

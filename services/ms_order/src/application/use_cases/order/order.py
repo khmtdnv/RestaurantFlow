@@ -1,4 +1,4 @@
-from application.dto.order import AddItemRequest
+from application.dtos.order import AddItemRequest
 from domain.interfaces.uow import IUnitOfWork
 
 

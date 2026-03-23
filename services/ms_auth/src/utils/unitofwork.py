@@ -6,7 +6,7 @@ from repositories.users import UsersRepository
 
 
 class IUnitOfWork(ABC):
-    users: Type[UsersRepository]
+    users: UsersRepository
 
     @abstractmethod
     def __init__(self):

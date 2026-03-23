@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from application.dto.sync import ItemSyncDTO
+from application.dtos.sync import ItemSyncDTO
 from infrastructure.repositories.item_synchronizer import ItemSynchronizer
 from sqlalchemy.ext.asyncio import async_sessionmaker
 

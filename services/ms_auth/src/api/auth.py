@@ -1,5 +1,5 @@
-from api.dependencies import RedisDependency, UOWDependency
-from fastapi import APIRouter
+from api.dependencies import RedisDependency, UOWDependency, get_token_payload
+from fastapi import APIRouter, Depends, Response
 from schemas.auth import (
     LogoutRequestDTO,
     LogoutResponseDTO,
@@ -15,6 +15,12 @@ from schemas.auth import (
 from services.auth import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+
+@router.get("/verify")
+async def verify_gateway_auth(payload: dict = Depends(get_token_payload)):
+    user_id = str(payload.get("sub"))
+    return Response(status_code=200, headers={"X-User-Id": user_id})
 
 
 @router.post("/send-code", response_model=SendCodeResponseDTO)
