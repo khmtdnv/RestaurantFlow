@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
 
-from domain.interfaces.repositories import ICartRepository, IOrderRepository
+from domain.interfaces.cart_repository import ICartRepository
 
 
 class IUnitOfWork(ABC):
-    order: IOrderRepository
     cart: ICartRepository
 
     @abstractmethod

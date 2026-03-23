@@ -1,5 +1,5 @@
 from domain.aggregates.order import OrderStatus
-from infrastructure.database.core import Base, numeric_price
+from infrastructure.database.base import Base, numeric_price
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

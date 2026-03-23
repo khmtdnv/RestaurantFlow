@@ -1,7 +1,7 @@
 import logging
 
 from application.dtos.sync import MenuSyncEventDTO
-from application.use_cases.menu.menu_sync import SyncMenuUseCase
+from application.use_cases.menu.sync_menu import SyncMenuUseCase
 from infrastructure.database.session import async_session_maker
 from pydantic import ValidationError
 

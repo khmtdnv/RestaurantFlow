@@ -2,11 +2,10 @@ import asyncio
 import logging
 import signal
 
-from config import settings
-from infrastructure.message_broker.consumer import RabbitMQConsumer
+from core.config import settings
+from core.logging import configure_logging
+from infrastructure.rabbitmq.consumer import RabbitMQConsumer
 from presentation.amqp.handlers import menu_sync_handler
-
-from .logging import configure_logging
 
 
 async def main():

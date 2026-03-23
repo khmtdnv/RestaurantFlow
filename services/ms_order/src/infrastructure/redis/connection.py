@@ -1,4 +1,4 @@
-from config import settings
+from core.config import settings
 from redis.asyncio import ConnectionPool
 
 redis_pool = ConnectionPool.from_url(

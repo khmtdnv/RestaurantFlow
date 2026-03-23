@@ -1,5 +1,5 @@
 from domain.entities.menu_item import MenuItem
-from domain.interfaces.repositories import IMenuItemRepository
+from domain.interfaces.menu_repository import IMenuItemRepository
 from infrastructure.database.models.menu_item import MenuItemOrm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

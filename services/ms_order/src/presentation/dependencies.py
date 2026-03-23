@@ -1,11 +1,13 @@
 from typing import Annotated
 
 from application.use_cases.cart.add_item import AddItemToCartUseCase
-from domain.interfaces.repositories import ICartRepository, IMenuItemRepository
+from domain.interfaces.cart_repository import ICartRepository
+from domain.interfaces.menu_repository import IMenuItemRepository
 from domain.interfaces.uow import IUnitOfWork
 from fastapi import Depends, Header
 from infrastructure.database.session import async_session_maker
-from infrastructure.dependencies.database import get_db_session, get_redis_client
+from infrastructure.dependencies.postgres import get_db_session
+from infrastructure.dependencies.redis import get_redis_client
 from infrastructure.repositories.cart_repository import RedisCartRepository
 from infrastructure.repositories.menu_item_repository import (
     SQLAlchemyMenuItemRepository,

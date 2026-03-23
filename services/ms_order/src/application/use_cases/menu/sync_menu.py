@@ -2,7 +2,7 @@ import logging
 from typing import List
 
 from application.dtos.sync import ItemSyncDTO
-from infrastructure.repositories.item_synchronizer import ItemSynchronizer
+from infrastructure.services.item_synchronizer import ItemSynchronizer
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = logging.getLogger(__name__)

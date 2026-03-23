@@ -1,10 +1,10 @@
 from domain.interfaces.uow import IUnitOfWork
 from infrastructure.repositories.order_repository import SqlAlchemyOrderRepository
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
 class SqlAlchemyUnitOfWork(IUnitOfWork):
-    def __init__(self, session_factory):
+    def __init__(self, session_factory: async_sessionmaker):
         self.session_factory = session_factory
 
     async def __aenter__(self):

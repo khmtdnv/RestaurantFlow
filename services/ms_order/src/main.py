@@ -1,6 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 
+from core.logging import configure_logging
 from domain.exceptions.base import DomainError
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -8,9 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from presentation.api.router import api_router
 
-from .logging import configure_logging
-
-# loggin
+# logging
 configure_logging()
 log = logging.getLogger(__name__)
 

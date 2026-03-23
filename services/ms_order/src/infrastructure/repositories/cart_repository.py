@@ -2,7 +2,7 @@ import json
 from decimal import Decimal
 
 from domain.aggregates.cart import Cart, CartItem
-from domain.interfaces.repositories import ICartRepository
+from domain.interfaces.cart_repository import ICartRepository
 from redis.asyncio import Redis
 
 

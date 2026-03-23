@@ -1,6 +1,7 @@
 from application.dtos.cart import AddItemToCartRequestDTO
 from domain.exceptions.menu import MenuItemNotFoundError, MenuItemUnavailableError
-from domain.interfaces.repositories import ICartRepository, IMenuItemRepository
+from domain.interfaces.cart_repository import ICartRepository
+from domain.interfaces.menu_repository import IMenuItemRepository
 
 
 class AddItemToCartUseCase:
