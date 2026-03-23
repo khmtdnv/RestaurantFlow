@@ -7,3 +7,7 @@ class IMenuItemRepository(ABC):
     @abstractmethod
     async def get_by_id(self, item_id: int) -> MenuItem | None:
         pass
+
+    @abstractmethod
+    async def upsert_batch(self, items: list[MenuItem]) -> None:
+        pass

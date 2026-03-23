@@ -2,27 +2,32 @@ import logging
 from typing import List
 
 from application.dtos.sync import ItemSyncDTO
-from infrastructure.services.item_synchronizer import ItemSynchronizer
+from domain.entities.menu_item import MenuItem
+from domain.interfaces.uow import IUnitOfWork
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 class SyncMenuUseCase:
-    def __init__(self, session_factory: async_sessionmaker):
-        self._session_factory = session_factory
+    def __init__(self, uow: IUnitOfWork):
+        self.uow = uow
 
-    async def execute(self, items: List[ItemSyncDTO]) -> None:
-        if not items:
+    async def execute(self, items_dto: List[ItemSyncDTO]) -> None:
+        if not items_dto:
             return
-        items_data = [item.model_dump() for item in items]
 
-        async with self._session_factory() as session:
-            try:
-                synchronizer = ItemSynchronizer(session)
-                await synchronizer.sync_batch(items_data)
-                await session.commit()
-                logger.info("ms_order:сообщение обработано")
-            except Exception:
-                await session.rollback()
-                raise
+        entities = [
+            MenuItem(
+                id=dto.id,
+                price=dto.price,
+                is_available=dto.is_available,
+            )
+            for dto in items_dto
+        ]
+
+        async with self.uow:
+            await self.uow.menu_item.upsert_batch(entities)
+            await self.uow.commit()
+
+        log.info(f"Synchronized {len(entities)} menu items.")

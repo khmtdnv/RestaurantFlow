@@ -2,6 +2,7 @@ from domain.entities.menu_item import MenuItem
 from domain.interfaces.menu_repository import IMenuItemRepository
 from infrastructure.database.models.menu_item import MenuItemOrm
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -25,3 +26,18 @@ class SQLAlchemyMenuItemRepository(IMenuItemRepository):
         )
 
         return domain_model
+
+    async def upsert_batch(self, items: list[dict]) -> None:
+        if not items:
+            return
+
+        stmt = pg_insert(MenuItemOrm).values(items)
+        update_stmt = stmt.on_conflict_do_update(
+            index_elements=["id"],
+            set_={
+                "name": stmt.excluded.name,
+                "price": stmt.excluded.price,
+                "is_available": stmt.excluded.is_available,
+            },
+        )
+        await self.session.execute(update_stmt)
