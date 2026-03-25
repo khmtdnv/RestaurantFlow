@@ -49,7 +49,17 @@ class RedisCartRepository(ICartRepository):
         ]
         return Cart(user_id=user_id, items=items)
 
-    async def get_by_user_id(self, user_id: int) -> Cart:
+    async def get_by_user_id(self, user_id: int) -> Cart | None:
+        raw_data = await self.redis.get(self._get_key(user_id))
+
+        if not raw_data:
+            return None
+
+        data = json.loads(raw_data)
+
+        return self._deserialize_cart(data)
+
+    async def get_or_create_by_user_id(self, user_id: int) -> Cart:
         raw_data = await self.redis.get(self._get_key(user_id))
 
         # if there is no existing cart for user create him a new one

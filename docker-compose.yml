@@ -11,6 +11,7 @@ volumes:
   ms_menu_cache:
   # ms_order
   ms_order_db_data:
+  ms_order_cache:
   # common
   rabbitmq_data:
   minio_data:
@@ -224,6 +225,19 @@ services:
       - ms_order_db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ms_order_cache:
+    image: redis:7-alpine
+    container_name: ms_order_cache
+    networks:
+      - restaurant_network
+    volumes:
+      - ms_order_cache:/cache_data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

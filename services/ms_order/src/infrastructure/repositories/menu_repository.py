@@ -27,6 +27,26 @@ class SQLAlchemyMenuItemRepository(IMenuItemRepository):
 
         return domain_model
 
+    async def get_by_ids(self, item_ids: list[int]) -> list[MenuItem]:
+        if not item_ids:
+            return []
+
+        stmt = select(MenuItemOrm).where(MenuItemOrm.id.in_(item_ids))
+        result = await self.session.execute(stmt)
+
+        db_models = result.scalars().all()
+
+        domain_models = [
+            MenuItem(
+                id=db_model.id,
+                price=db_model.price,
+                is_available=db_model.is_available,
+            )
+            for db_model in db_models
+        ]
+
+        return domain_models
+
     async def upsert_batch(self, items: list[dict]) -> None:
         if not items:
             return

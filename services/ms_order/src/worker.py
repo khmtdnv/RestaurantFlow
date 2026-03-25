@@ -5,7 +5,7 @@ import signal
 from core.config import settings
 from core.logging import configure_logging
 from infrastructure.rabbitmq.consumer import RabbitMQConsumer
-from presentation.amqp.handlers import menu_sync_handler
+from presentation.amqp.menu_sync_handler import menu_sync_handler
 
 
 async def main():
@@ -38,7 +38,6 @@ async def main():
             prefetch_count=10,
         )
         await stop_event.wait()
-
     finally:
         log.info("Closing Rabbimq connection.")
         await consumer.close()

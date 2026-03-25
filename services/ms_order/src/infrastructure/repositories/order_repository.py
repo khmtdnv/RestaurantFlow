@@ -1,15 +1,33 @@
-from domain.aggregates.order import Order, OrderItem
+from domain.aggregates.order import Order
+from domain.interfaces.order_repository import IOrderRepository
 from infrastructure.database.models.order import OrderItemModel, OrderModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class SqlAlchemyOrderRepository:
+class SQLAlchemyOrderRepository(IOrderRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def add(self, order: Order) -> Order: ...
+    async def create(self, order: Order) -> int:
+        order_items_orm = [
+            OrderItemModel(
+                dish_id=item.dish_id,
+                quantity=item.quantity,
+                price=item.price,
+            )
+            for item in order.items
+        ]
 
-    async def get_by_id(self, order_id: int) -> Order | None: ...
+        order_orm = OrderModel(
+            user_id=order.user_id,
+            status=order.status,
+            total_price=order.total_price,
+            items=order_items_orm,
+        )
 
-    async def update(self, order: Order) -> None: ...
+        self.session.add(order_orm)
+
+        await self.session.flush()
+
+        return order_orm.id

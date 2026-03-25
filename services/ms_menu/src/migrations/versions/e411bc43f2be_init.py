@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 6910e1c05d23
+Revision ID: e411bc43f2be
 Revises:
-Create Date: 2026-03-09 21:09:00.626235
+Create Date: 2026-03-25 16:54:00.375693
 
 """
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "6910e1c05d23"
+revision: str = "e411bc43f2be"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -25,12 +25,8 @@ def upgrade() -> None:
         "categories",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column(
-            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
+        sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
@@ -38,21 +34,15 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("price", sa.Numeric(precision=10, scale=2), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column(
-            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
+        sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
         "processed_messages",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("message_id", sa.String(length=255), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
+        sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("message_id"),
     )
@@ -60,12 +50,8 @@ def upgrade() -> None:
         "tags",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column(
-            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
+        sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("name"),
     )
@@ -75,28 +61,21 @@ def upgrade() -> None:
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("price", sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column("description", sa.String(), nullable=True),
-        sa.Column(
-            "is_available", sa.Boolean(), server_default=sa.text("true"), nullable=False
-        ),
+        sa.Column("is_available", sa.Boolean(), server_default=sa.text("true"), nullable=False),
+        sa.Column("image_url", sa.String(), nullable=True),
         sa.Column("category_id", sa.Integer(), nullable=True),
-        sa.Column(
-            "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.Column(
-            "updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
-        ),
-        sa.ForeignKeyConstraint(
-            ["category_id"], ["categories.id"], ondelete="SET NULL"
-        ),
+        sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
+        sa.ForeignKeyConstraint(["category_id"], ["categories.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
         "combos_dishes",
-        sa.Column("dish_id", sa.Integer(), nullable=False),
         sa.Column("combo_id", sa.Integer(), nullable=False),
+        sa.Column("dish_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(["combo_id"], ["combos.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["dish_id"], ["dishes.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("dish_id", "combo_id"),
+        sa.PrimaryKeyConstraint("combo_id", "dish_id"),
     )
     op.create_table(
         "dishes_tags",

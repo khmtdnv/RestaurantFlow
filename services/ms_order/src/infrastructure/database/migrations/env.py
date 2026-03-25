@@ -5,6 +5,7 @@ from alembic import context
 from core.config import settings
 from infrastructure.database.base import Base
 from infrastructure.database.models.menu_item import MenuItemOrm
+from infrastructure.database.models.order import OrderItemModel, OrderModel
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config

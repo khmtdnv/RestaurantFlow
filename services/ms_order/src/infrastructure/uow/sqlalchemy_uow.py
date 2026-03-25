@@ -1,15 +1,16 @@
 from domain.interfaces.uow import IUnitOfWork
-from infrastructure.repositories.order_repository import SqlAlchemyOrderRepository
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from infrastructure.repositories.menu_repository import SQLAlchemyMenuItemRepository
+from infrastructure.repositories.order_repository import SQLAlchemyOrderRepository
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class SqlAlchemyUnitOfWork(IUnitOfWork):
-    def __init__(self, session_factory: async_sessionmaker):
-        self.session_factory = session_factory
+class SQLAlchemyUnitOfWork(IUnitOfWork):
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.menu_repo = SQLAlchemyMenuItemRepository(session)
+        self.order_repo = SQLAlchemyOrderRepository(session)
 
     async def __aenter__(self):
-        self.session = self.session_factory()
-        self.orders = SqlAlchemyOrderRepository(self.session)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):

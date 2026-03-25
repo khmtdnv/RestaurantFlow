@@ -57,7 +57,7 @@ class RabbitMQConsumer:
         await queue.bind(exchange, routing_key=routing_key)
 
         async def _process_message(message: AbstractIncomingMessage) -> None:
-            async with message.process(requeue=True):
+            async with message.process(requeue=False):
                 try:
                     await handler(message.body)
                 except Exception as e:

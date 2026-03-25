@@ -8,11 +8,8 @@ from domain.entities.cart_item import CartItem
 class Cart:
     """Cart aggregate linked to user."""
 
-    # user_id needs to be extracted from request header "X-User-Id"
     user_id: int
     items: list[CartItem] = field(default_factory=list)
-    # init=False means we can't specify total price when creating cart
-    # we can't do Cart(user_id=1, total_price=Decimal("9999")) or we will get TypeError
     total_price: Decimal = field(init=False)
 
     def __post_init__(self) -> None:

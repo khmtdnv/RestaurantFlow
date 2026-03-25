@@ -1,11 +1,12 @@
-from application.dtos.cart import AddItemToCartRequestDTO
+from application.dtos.cart import AddItemToCartInputDTO
+from domain.aggregates.cart import Cart
 from domain.exceptions.menu import MenuItemNotFoundError, MenuItemUnavailableError
 from domain.interfaces.cart_repository import ICartRepository
 from domain.interfaces.menu_repository import IMenuItemRepository
 
 
 class AddItemToCartUseCase:
-    """Use case: adding new position to cart."""
+    """Добавлению блюда в корзину."""
 
     def __init__(
         self,
@@ -15,16 +16,18 @@ class AddItemToCartUseCase:
         self.cart_repo = cart_repo
         self.menu_repo = menu_repo
 
-    async def execute(self, user_id: int, request: AddItemToCartRequestDTO) -> None:
-        menu_item = await self.menu_repo.get_by_id(request.dish_id)
+    async def execute(self, dto: AddItemToCartInputDTO) -> Cart:
+        menu_item = await self.menu_repo.get_by_id(dto.dish_id)
 
         if not menu_item:
-            raise MenuItemNotFoundError(f"Dish:{request.dish_id} were not found.")
+            raise MenuItemNotFoundError(f"Блюдо с ID:{dto.dish_id} не найдено.")
 
         if not menu_item.is_available:
-            raise MenuItemUnavailableError(f"Dish:{request.dish_id} currently not available.")
+            raise MenuItemUnavailableError(f"Блюдо с ID:{dto.dish_id} сейчас не в наличии.")
 
-        cart = await self.cart_repo.get_by_user_id(user_id)
+        cart = await self.cart_repo.get_or_create_by_user_id(dto.user_id)
 
-        cart.add_item(dish_id=request.dish_id, quantity=request.quantity, price=menu_item.price)
+        cart.add_item(dish_id=dto.dish_id, quantity=dto.quantity, price=menu_item.price)
         await self.cart_repo.save(cart)
+
+        return cart

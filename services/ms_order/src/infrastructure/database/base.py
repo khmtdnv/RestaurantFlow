@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 
-from sqlalchemy import DateTime, Integer, Numeric, func
+from sqlalchemy import DateTime, Integer, MetaData, Numeric, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 id_pk = Annotated[int, mapped_column(Integer, primary_key=True, autoincrement=True)]
@@ -28,9 +28,22 @@ class TimestampMixin:
     )
 
 
-class Base(DeclarativeBase):
-    """Base class for all SQLAlchemy models."""
+# Шаблоны именования для всех типов ограничений и индексов
+POSTGRES_NAMING_CONVENTION = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
 
+metadata = MetaData(naming_convention=POSTGRES_NAMING_CONVENTION)
+
+
+class Base(DeclarativeBase):
+    """Базовый класс для всех ORM моделей."""
+
+    metadata = metadata
     __repr_attrs__: list[str] = []
 
     def __repr__(self) -> str:
