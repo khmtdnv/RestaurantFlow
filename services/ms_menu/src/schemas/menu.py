@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import Generic, TypeVar
 
@@ -17,7 +18,7 @@ class DishFullOut(BaseModel):
     category: MenuCategoryOut | None
     combos: list[ComboSimpleOut]
     tags: list[TagOut]
-
+    updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
 

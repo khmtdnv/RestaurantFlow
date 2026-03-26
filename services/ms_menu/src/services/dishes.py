@@ -77,9 +77,7 @@ class DishService:
             if dto.tag_ids:
                 tags_orm = await self.uow.tag.get_tags_by_ids(dto.tag_ids)
                 if len(tags_orm) != len(dto.tag_ids):
-                    raise ValueError(
-                        "Один или несколько указанных тегов не найдены в базе"
-                    )
+                    raise ValueError("Один или несколько указанных тегов не найдены в базе")
             dish_orm = Dish(
                 name=dto.name,
                 price=dto.price,
@@ -113,9 +111,7 @@ class DishService:
                 if dto.tag_ids:
                     tags = await self.uow.tag.get_tags_by_ids(dto.tag_ids)
                     if len(tags) != len(dto.tag_ids):
-                        raise ValueError(
-                            "Один или несколько указанных тегов не найдены в базе"
-                        )
+                        raise ValueError("Один или несколько указанных тегов не найдены в базе")
                     dish.tags = tags
                 else:
                     dish.tags = []
@@ -133,9 +129,7 @@ class DishService:
             await self._publish_event("menu.inner.price.change", dish_dict_for_broker)
 
         if old_availability != dish_scheme.is_available:
-            await self._publish_event(
-                "menu.inner.item.availability", dish_dict_for_broker
-            )
+            await self._publish_event("menu.inner.item.availability", dish_dict_for_broker)
 
         return dish_scheme
 

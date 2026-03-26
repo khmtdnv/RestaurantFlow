@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from infrastructure.database.base import Base, numeric_price
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -9,3 +11,4 @@ class MenuItemOrm(Base):
     name: Mapped[str]
     price: Mapped[numeric_price]
     is_available: Mapped[bool]
+    updated_at: Mapped[datetime]

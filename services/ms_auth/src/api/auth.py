@@ -20,7 +20,8 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.get("/verify")
 async def verify_gateway_auth(payload: dict = Depends(get_token_payload)):
     user_id = str(payload.get("sub"))
-    return Response(status_code=200, headers={"X-User-Id": user_id})
+    is_superuser = str(payload.get("is_superuser"))
+    return Response(status_code=200, headers={"X-User-Id": user_id, "X-Is-Superuser": is_superuser})
 
 
 @router.post("/send-code", response_model=SendCodeResponseDTO)

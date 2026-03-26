@@ -7,7 +7,7 @@ from application.use_cases.order.create_order import CreateOrderUseCase
 from domain.interfaces.cart_repository import ICartRepository
 from domain.interfaces.menu_repository import IMenuItemRepository
 from domain.interfaces.uow import IUnitOfWork
-from fastapi import Depends, Header
+from fastapi import Depends, Header, HTTPException, status
 from infrastructure.dependencies.postgres import get_db_session
 from infrastructure.dependencies.redis import get_redis_client
 from infrastructure.repositories.cart_repository import RedisCartRepository
@@ -18,9 +18,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 # user_id extraction
-def get_current_user_id(
-    user_id: int = Header(..., alias="X-User-Id", description="User ID from API Gateway.")
+def get_current_user(
+    user_id: int = Header(..., alias="X-User-Id"),
 ) -> int:
+    return user_id
+
+
+def get_current_admin_user(
+    user_id: int = Depends(get_current_user),
+    is_superuser: bool = Header(..., alias="X-Is-Superuser"),
+) -> int:
+    if not is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Недостаточно прав. Требуется уровень администратора.",
+        )
     return user_id
 
 

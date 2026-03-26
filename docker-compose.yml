@@ -20,6 +20,29 @@ services:
   # ==========================================
   # ИНФРАСТРУКТУРА (Общая)
   # ==========================================
+  traefik:
+    image: traefik:v3.6
+    container_name: traefik
+    networks:
+      - restaurant_network
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--providers.docker.exposedbydefault=false"
+    ports:
+      - "80:80"
+      # - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.routers.traefik.rule=Host(`dashboard.localhost`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+
+
+
   rabbitmq:
     image: rabbitmq:4-management
     container_name: shared_rabbitmq
@@ -62,13 +85,33 @@ services:
       - ./services/ms_auth:/app
     networks:
       - restaurant_network
-    ports:
-      - "8001:8000"
     env_file:
       - ./services/ms_auth/.env.dev
     depends_on:
       ms_auth_db:
         condition: service_healthy
+    # ports: # закрываем порты потому что теперь этим будет заниматься traefik
+    #   - "8001:8000"
+    labels:
+      - "traefik.enable=true"
+
+      # middleware traefik для переадресации на сервис авторизации при попытке попасть на защищеный сервис
+      - "traefik.http.middlewares.gateway_auth.forwardauth.address=http://ms_auth_api:8000/auth/verify"
+      - "traefik.http.middlewares.gateway_auth.forwardauth.authResponseHeaders=X-User-Id,X-Is-Superuser"
+      - "traefik.http.middlewares.gateway_auth.forwardauth.trustForwardHeader=true"
+      # middleware traefik для глобального ограничения количества возможных запросов на сервис
+      - "traefik.http.middlewares.service_rate_limiter.ratelimit.average=10"
+      - "traefik.http.middlewares.service_rate_limiter.ratelimit.burst=50"
+
+      - "traefik.http.services.ms_auth_api.loadbalancer.server.port=8000"
+
+      # public
+      - "traefik.http.routers.ms_auth_api_public.rule=Host(`auth.localhost`) && (PathPrefix(`/docs`) || PathPrefix(`/openapi.json`))"
+      - "traefik.http.routers.ms_auth_api_public.service=ms_auth_api"
+      # protected
+      - "traefik.http.routers.ms_auth_api_protected.rule=Host(`auth.localhost`)"
+      - "traefik.http.routers.ms_auth_api_protected.service=ms_auth_api"
+      - "traefik.http.routers.ms_auth_api_protected.middlewares=service_rate_limiter"
 
   ms_auth_db:
     image: postgres:15-alpine
@@ -112,8 +155,6 @@ services:
       - restaurant_network
     volumes:
       - ./services/ms_menu:/app
-    ports:
-      - "8002:8000"
     env_file:
       - ./services/ms_menu/.env.dev
     depends_on:
@@ -123,6 +164,19 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    # ports:
+    #   - "8002:8000"
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.services.ms_menu_api.loadbalancer.server.port=8000"
+
+      - "traefik.http.routers.ms_menu_api_public.rule=Host(`menu.localhost`) && (PathPrefix(`/docs`) || PathPrefix(`/openapi.json`))"
+      - "traefik.http.routers.ms_menu_api_public.service=ms_menu_api"
+
+      - "traefik.http.routers.ms_menu_api_protected.rule=Host(`menu.localhost`)"
+      - "traefik.http.routers.ms_menu_api_protected.service=ms_menu_api"
+      - "traefik.http.routers.ms_menu_api_protected.middlewares=gateway_auth,service_rate_limiter"
 
   ms_menu_worker:
     build:
@@ -184,8 +238,6 @@ services:
       - restaurant_network
     volumes:
       - ./services/ms_order:/app
-    ports:
-      - "8003:8000"
     env_file:
       - ./services/ms_order/.env.dev
     depends_on:
@@ -193,6 +245,19 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    # ports:
+    #   - "8003:8000"
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.services.ms_order_api.loadbalancer.server.port=8000"
+
+      - "traefik.http.routers.ms_order_api_public.rule=Host(`order.localhost`) && (PathPrefix(`/docs`) || PathPrefix(`/openapi.json`))"
+      - "traefik.http.routers.ms_order_api_public.service=ms_order_api"
+
+      - "traefik.http.routers.ms_order_api_protected.rule=Host(`order.localhost`)"
+      - "traefik.http.routers.ms_order_api_protected.service=ms_order_api"
+      - "traefik.http.routers.ms_order_api_protected.middlewares=gateway_auth,service_rate_limiter"
 
   ms_order_worker:
     build:

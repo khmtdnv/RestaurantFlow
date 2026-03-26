@@ -7,7 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from redis.asyncio import Redis, from_url
 from utils.unitofwork import IUnitOfWork, UnitOfWork
 
-REDIS_URL = "redis://redis:6379/0"
+REDIS_URL = "redis://ms_auth_cache:6379/0"
 
 
 async def get_redis() -> AsyncGenerator[Redis, None]:
@@ -63,8 +63,11 @@ async def get_current_user(
         return user
 
 
-async def get_current_admin_user(current_user=Depends(get_current_user)):
-    if getattr(current_user, "is_superuser", False) is False:
+async def get_current_admin_user(
+    current_user=Depends(get_current_user),
+    payload: dict = Depends(get_token_payload),
+):
+    if not current_user and not payload.get("is_superuser"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Недостаточно прав. Требуется уровень администратора.",

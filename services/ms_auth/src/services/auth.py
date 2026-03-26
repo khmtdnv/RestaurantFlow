@@ -22,13 +22,23 @@ class AuthService:
 
         return jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
 
-    def create_tokens_pair(self, user_id: int):
+    def create_tokens_pair(self, user_id: int, is_superuser: bool):
         access_token = self.create_token(
-            {"sub": str(user_id), "typ": "access", "is_phone_verified": True},
-            expires_delta=timedelta(minutes=15),
+            {
+                "typ": "access",
+                "sub": str(user_id),
+                "is_phone_verified": True,
+                "is_superuser": is_superuser,
+            },
+            expires_delta=timedelta(days=1),
         )
         refresh_token = self.create_token(
-            {"sub": str(user_id), "typ": "refresh", "is_phone_verified": True},
+            {
+                "sub": str(user_id),
+                "typ": "refresh",
+                "is_phone_verified": True,
+                "is_superuser": is_superuser,
+            },
             expires_delta=timedelta(days=7),
         )
 
@@ -100,7 +110,7 @@ class AuthService:
                 new_user_dict = new_user.model_dump()
                 user = await self.uow.users.create_one(new_user_dict)  # type: ignore
 
-            tokens_pair = self.create_tokens_pair(user_id=user.id)
+            tokens_pair = self.create_tokens_pair(user_id=user.id, is_superuser=user.is_superuser)
 
             await self.update_user(user_id=user.id, tokens_pair=tokens_pair)
             await self.uow.commit()
@@ -115,7 +125,7 @@ class AuthService:
             if not user or user.token_expires_at < datetime.now(timezone.utc):
                 return HTTPException(status_code=400, detail="Токен не валиден")
 
-            tokens_pair = self.create_tokens_pair(user_id=user.id)
+            tokens_pair = self.create_tokens_pair(user_id=user.id, is_superuser=user.is_superuser)
             await self.update_user(user_id=user.id, tokens_pair=tokens_pair)
 
             return tokens_pair

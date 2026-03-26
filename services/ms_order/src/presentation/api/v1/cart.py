@@ -6,7 +6,7 @@ from presentation.api.dtos.cart import AddItemToCartRequestDTO, CartResponseDTO
 from presentation.dependencies import (
     add_item_to_cart_use_case,
     get_cart_use_case,
-    get_current_user_id,
+    get_current_user,
 )
 
 router = APIRouter(
@@ -35,7 +35,7 @@ router = APIRouter(
     summary="Посмотреть корзину.",
 )
 async def get_cart(
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(get_current_user),
     use_case: GetCartUseCase = Depends(get_cart_use_case),
 ) -> CartResponseDTO:
     input_dto = GetCartInputDTO(user_id=user_id)
@@ -72,7 +72,7 @@ async def get_cart(
 )
 async def add_item_to_cart(
     request_dto: AddItemToCartRequestDTO,
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(get_current_user),
     use_case: AddItemToCartUseCase = Depends(add_item_to_cart_use_case),
 ) -> CartResponseDTO:
     input_dto = AddItemToCartInputDTO(

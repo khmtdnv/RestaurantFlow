@@ -22,6 +22,7 @@ class SyncMenuUseCase:
                 "name": dto.name,
                 "price": dto.price,
                 "is_available": dto.is_available,
+                "updated_at": dto.updated_at,
             }
             for dto in items_dto
         ]

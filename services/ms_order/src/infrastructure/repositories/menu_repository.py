@@ -58,6 +58,8 @@ class SQLAlchemyMenuItemRepository(IMenuItemRepository):
                 "name": stmt.excluded.name,
                 "price": stmt.excluded.price,
                 "is_available": stmt.excluded.is_available,
+                "updated_at": stmt.excluded.updated_at,
             },
+            where=(MenuItemOrm.updated_at < stmt.excluded.updated_at),
         )
         await self.session.execute(update_stmt)

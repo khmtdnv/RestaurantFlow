@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, field_validator
@@ -41,6 +42,7 @@ class DishUpdateIn(BaseModel):
 
 class DishOut(DishBase):
     id: int
+    updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
 

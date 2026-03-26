@@ -29,10 +29,10 @@ force-exclude = '''
 
 [tool.isort]
 profile = "black"
-line_length = 88
+line_length = 100
 skip_glob = ["services/ms_auth/src/migrations/*"]
 
 [tool.flake8]
-max-line-length = 88
-exclude = [".venv", "services/ms_auth/src/migrations/*"]
+max-line-length = 100
+exclude = [".venv", "services/*/src/migrations/*", "pydantic.ipynb"]
 extend-ignore = ["E203", "E501", "W503", "W504", "F405", "F403", "F401"]

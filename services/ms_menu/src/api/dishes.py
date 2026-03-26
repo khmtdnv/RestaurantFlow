@@ -6,7 +6,13 @@ from api.dependencies import (
 )
 from fastapi import APIRouter, Query, UploadFile, status
 from schemas.dishes import DishCreateIn, DishOut, DishOutWithTags, DishUpdateIn
-from schemas.menu import CursorResponse, LimitOffsetResponse, MenuOut, PaginatedResponse
+from schemas.menu import (
+    CursorResponse,
+    DishFullOut,
+    LimitOffsetResponse,
+    MenuOut,
+    PaginatedResponse,
+)
 from services.dishes import DishService
 
 router = APIRouter(prefix="/dishes", tags=["Dishes"])
@@ -98,7 +104,7 @@ async def get_menu(
 
 @menu_router.get(
     "/offset",
-    response_model=LimitOffsetResponse[MenuOut],
+    response_model=LimitOffsetResponse[list[DishFullOut]],
     status_code=status.HTTP_200_OK,
 )
 async def get_menu_offset(
@@ -112,9 +118,7 @@ async def get_menu_offset(
     return menu
 
 
-@menu_router.get(
-    "/page", response_model=PaginatedResponse[MenuOut], status_code=status.HTTP_200_OK
-)
+@menu_router.get("/page", response_model=PaginatedResponse[MenuOut], status_code=status.HTTP_200_OK)
 async def get_menu_page(
     uow: UOWDependency,
     broker: BrokerDependency,
@@ -126,9 +130,7 @@ async def get_menu_page(
     return menu
 
 
-@menu_router.get(
-    "/cursor", response_model=CursorResponse[MenuOut], status_code=status.HTTP_200_OK
-)
+@menu_router.get("/cursor", response_model=CursorResponse[MenuOut], status_code=status.HTTP_200_OK)
 async def get_menu_cursor(
     uow: UOWDependency,
     broker: BrokerDependency,
