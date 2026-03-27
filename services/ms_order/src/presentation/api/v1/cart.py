@@ -2,6 +2,7 @@ from application.dtos.cart import AddItemToCartInputDTO, GetCartInputDTO
 from application.use_cases.cart.add_item import AddItemToCartUseCase
 from application.use_cases.cart.get_cart import GetCartUseCase
 from fastapi import APIRouter, Depends, status
+from infrastructure.slowapi.rate_limit import limiter
 from presentation.api.dtos.cart import AddItemToCartRequestDTO, CartResponseDTO
 from presentation.dependencies import (
     add_item_to_cart_use_case,
@@ -29,11 +30,14 @@ router = APIRouter(
 #         {"dish_id": 3, "quantity": 1, "price": "250.00"},
 #     ],
 # }
+
+
 @router.get(
     "",
     status_code=status.HTTP_200_OK,
     summary="Посмотреть корзину.",
 )
+@limiter.limit("90/minute")
 async def get_cart(
     user_id: int = Depends(get_current_user),
     use_case: GetCartUseCase = Depends(get_cart_use_case),
@@ -64,6 +68,7 @@ async def get_cart(
 #         {"dish_id": 3, "quantity": 1, "price": "250.00"},
 #     ],
 # }
+@limiter.limit("30/minute")
 @router.post(
     "/items",
     response_model=CartResponseDTO,

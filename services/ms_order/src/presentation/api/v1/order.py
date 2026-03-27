@@ -1,6 +1,7 @@
 from application.dtos.order import CreateOrderInputDTO
 from application.use_cases.order.create_order import CreateOrderUseCase
 from fastapi import APIRouter, Depends, status
+from infrastructure.slowapi.rate_limit import limiter
 from presentation.api.dtos.order import OrderResponseDTO
 from presentation.dependencies import (
     create_order_use_case,
@@ -18,6 +19,7 @@ router = APIRouter(
     status_code=status.HTTP_201_CREATED,
     summary="Создать заказ.",
 )
+@limiter.limit("60/minute")
 async def create_order(
     user_id: int = Depends(get_current_user),
     use_case: CreateOrderUseCase = Depends(create_order_use_case),

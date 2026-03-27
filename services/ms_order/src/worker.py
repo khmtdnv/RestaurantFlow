@@ -6,17 +6,29 @@ from core.config import settings
 from core.logging import configure_logging
 from infrastructure.rabbitmq.consumer import RabbitMQConsumer
 from presentation.amqp.menu_sync_handler import menu_sync_handler
+from tenacity import before_sleep_log, retry, stop_after_attempt, wait_exponential
+
+configure_logging()
+log = logging.getLogger(__name__)
+
+
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    reraise=True,
+    before_sleep=before_sleep_log(log, logging.WARNING),
+)
+async def connect_with_retry(consumer: RabbitMQConsumer):
+    await consumer.connect()
 
 
 async def main():
-    configure_logging()
-    log = logging.getLogger(__name__)
 
-    stop_event = asyncio.Event()
+    event = asyncio.Event()
 
     def handle_shutdown_signal():
-        log.info("Caught sigint/sigterm. Perfroming shut down.")
-        stop_event.set()
+        log.info("Остановка RabbitMQ")
+        event.set()
 
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGINT, signal.SIGTERM):
@@ -26,8 +38,8 @@ async def main():
             pass
 
     consumer = RabbitMQConsumer(amqp_url=settings.RABBITMQ_URL)
-    await consumer.connect()
-    log.info("Rabbitmq connection established. message consuming started.")
+    await connect_with_retry(consumer)
+    log.info("RabbitMQ готов")
 
     try:
         await consumer.consume(
@@ -37,11 +49,9 @@ async def main():
             handler=menu_sync_handler,
             prefetch_count=10,
         )
-        await stop_event.wait()
+        await event.wait()
     finally:
-        log.info("Closing Rabbimq connection.")
         await consumer.close()
-        log.info("Worker successfully stopped.")
 
 
 if __name__ == "__main__":
