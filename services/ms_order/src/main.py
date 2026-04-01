@@ -1,6 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 
+import aiohttp
 from core.logging import configure_logging
 from domain.exceptions.base import DomainError
 from fastapi import FastAPI, Request, status
@@ -52,9 +53,11 @@ async def wait_for_redis():
 async def lifespan(app: FastAPI):
     await wait_for_postgres()
     await wait_for_redis()
+    app.state.http_session = aiohttp.ClientSession()
     yield
     await engine.dispose()
     await redis_pool.disconnect()
+    await app.state.http_session.close()
 
 
 # app init

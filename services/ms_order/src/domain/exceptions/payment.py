@@ -1,0 +1,2 @@
+class PaymentClientError(Exception):
+    pass

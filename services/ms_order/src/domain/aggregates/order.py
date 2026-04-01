@@ -38,3 +38,9 @@ class Order:
             return
 
         self.id = id
+
+    def change_status(self, new_status: OrderStatus) -> None:
+        if not new_status:
+            return
+
+        self.status = new_status

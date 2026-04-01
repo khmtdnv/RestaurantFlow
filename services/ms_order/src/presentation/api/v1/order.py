@@ -26,6 +26,5 @@ async def create_order(
     use_case: CreateOrderUseCase = Depends(create_order_use_case),
 ) -> OrderResponseDTO:
     input_dto = CreateOrderInputDTO(user_id=user_id)
-    order = await use_case.execute(input_dto)
-    response_dto = OrderResponseDTO.model_validate(order)
-    return response_dto
+    response = await use_case.execute(input_dto)
+    return OrderResponseDTO.model_validate(response)

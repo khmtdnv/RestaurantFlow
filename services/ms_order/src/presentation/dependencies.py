@@ -1,20 +1,34 @@
 from typing import Annotated
 
+import aiohttp
 from application.use_cases.cart.add_item import AddItemToCartUseCase
 from application.use_cases.cart.get_cart import GetCartUseCase
 from application.use_cases.menu.sync_menu import SyncMenuUseCase
 from application.use_cases.order.create_order import CreateOrderUseCase
 from domain.interfaces.cart_repository import ICartRepository
 from domain.interfaces.menu_repository import IMenuItemRepository
+from domain.interfaces.payment_client import IPaymentClient
 from domain.interfaces.uow import IUnitOfWork
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Request, status
 from infrastructure.dependencies.postgres import get_db_session
 from infrastructure.dependencies.redis import get_redis_client
 from infrastructure.repositories.cart_repository import RedisCartRepository
 from infrastructure.repositories.menu_repository import SQLAlchemyMenuItemRepository
 from infrastructure.uow.sqlalchemy_uow import SQLAlchemyUnitOfWork
+from infrastructure.yookassa.client import PaymentClient
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
+
+
+async def get_aiohttp_session(request: Request) -> aiohttp.ClientSession:
+    return request.app.state.http_session
+
+
+async def get_payment_client(
+    session: aiohttp.ClientSession = Depends(get_aiohttp_session),
+) -> IPaymentClient:
+    base_url = "http://ms_payment_api:8000/api/v1"
+    return PaymentClient(base_url=base_url, session=session)
 
 
 # user_id extraction
@@ -71,5 +85,6 @@ def get_cart_use_case(
 def create_order_use_case(
     cart_repo: ICartRepository = Depends(get_cart_repository),
     uow: IUnitOfWork = Depends(get_uow),
+    payment_client: IPaymentClient = Depends(get_payment_client),
 ) -> CreateOrderUseCase:
-    return CreateOrderUseCase(cart_repo=cart_repo, uow=uow)
+    return CreateOrderUseCase(cart_repo=cart_repo, uow=uow, payment_client=payment_client)

@@ -8,10 +8,10 @@ class IOrderRepository(ABC):
     async def create(self, order: Order) -> int:
         raise NotImplementedError
 
-    # @abstractmethod
-    # async def get_by_id(self, order_id: int) -> Order | None:
-    #     raise NotImplementedError
+    @abstractmethod
+    async def get_by_id(self, order_id: int) -> Order | None:
+        raise NotImplementedError
 
-    # @abstractmethod
-    # async def update(self, order: Order) -> None:
-    #     raise NotImplementedError
+    @abstractmethod
+    async def update_status(self, order: Order) -> None:
+        raise NotImplementedError

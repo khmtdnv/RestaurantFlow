@@ -6,6 +6,7 @@ from core.config import settings
 from core.logging import configure_logging
 from infrastructure.rabbitmq.consumer import RabbitMQConsumer
 from presentation.amqp.menu_sync_handler import menu_sync_handler
+from presentation.amqp.payment_status_handler import payment_status_handler
 from tenacity import before_sleep_log, retry, stop_after_attempt, wait_exponential
 
 configure_logging()
@@ -23,7 +24,6 @@ async def connect_with_retry(consumer: RabbitMQConsumer):
 
 
 async def main():
-
     event = asyncio.Event()
 
     def handle_shutdown_signal():
@@ -47,6 +47,13 @@ async def main():
             queue_name="ms_order_sync_queue",
             routing_key="menu.updated",
             handler=menu_sync_handler,
+            prefetch_count=10,
+        )
+        await consumer.consume(
+            exchange_name="ms_payment_exchange",
+            queue_name="ms_order_payment_queue",
+            routing_key="payment.succeeded",
+            handler=payment_status_handler,
             prefetch_count=10,
         )
         await event.wait()

@@ -15,7 +15,7 @@ volumes:
   # common
   rabbitmq_data:
   minio_data:
-  test_db:
+  # test_db:
 
 services:
   # ==========================================
@@ -74,22 +74,22 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
 
-  test_db:
-    image: postgres:15-alpine
-    container_name: test_db
-    networks:
-      - restaurant_network
-    ports:
-      - "5433:5432"
-    env:
-      - ./services/ms_auth/.env.dev
-    volumes:
-      - test_db_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # test_db:
+  #   image: postgres:15-alpine
+  #   container_name: test_db
+  #   networks:
+  #     - restaurant_network
+  #   ports:
+  #     - "5433:5432"
+  #   env:
+  #     - ./services/ms_auth/.env.dev
+  #   volumes:
+  #     - test_db_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
   # ==========================================
   # MS: AUTH
@@ -270,12 +270,12 @@ services:
 
       - "traefik.http.services.ms_order_api.loadbalancer.server.port=8000"
 
-      - "traefik.http.routers.ms_order_api_public.rule=Host(`order.localhost`) && (PathPrefix(`/docs`) || PathPrefix(`/openapi.json`))"
-      - "traefik.http.routers.ms_order_api_public.service=ms_order_api"
+      - "traefik.http.routers.ms_order_api_public.rule=Host(`order.localhost`)" #&& (PathPrefix(`/docs`) || PathPrefix(`/openapi.json`))"
+      # - "traefik.http.routers.ms_order_api_public.service=ms_order_api"
 
-      - "traefik.http.routers.ms_order_api_protected.rule=Host(`order.localhost`)"
-      - "traefik.http.routers.ms_order_api_protected.service=ms_order_api"
-      - "traefik.http.routers.ms_order_api_protected.middlewares=gateway_auth,service_rate_limiter"
+      # - "traefik.http.routers.ms_order_api_protected.rule=Host(`order.localhost`)"
+      # - "traefik.http.routers.ms_order_api_protected.service=ms_order_api"
+      # - "traefik.http.routers.ms_order_api_protected.middlewares=gateway_auth,service_rate_limiter"
 
   ms_order_worker:
     build:
@@ -324,3 +324,31 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+
+  # ==========================================
+  # MS: PAYMENT
+  # ==========================================
+  ms_payment_api:
+    build:
+      context: ./services/ms_payment
+      dockerfile: Dockerfile
+    container_name: ms_payment_api
+    networks:
+      - restaurant_network
+    volumes:
+      - ./services/ms_payment:/app
+    env_file:
+      - ./services/ms_payment/.env.dev
+    depends_on:
+      ms_order_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.services.ms_payment_api.loadbalancer.server.port=8000"
+
+      - "traefik.http.routers.ms_payment_api_public.rule=Host(`payment.localhost`)"
