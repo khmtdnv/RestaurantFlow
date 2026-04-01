@@ -15,6 +15,7 @@ volumes:
   # common
   rabbitmq_data:
   minio_data:
+  test_db:
 
 services:
   # ==========================================
@@ -72,6 +73,23 @@ services:
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
+
+  test_db:
+    image: postgres:15-alpine
+    container_name: test_db
+    networks:
+      - restaurant_network
+    ports:
+      - "5433:5432"
+    env:
+      - ./services/ms_auth/.env.dev
+    volumes:
+      - test_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ==========================================
   # MS: AUTH
