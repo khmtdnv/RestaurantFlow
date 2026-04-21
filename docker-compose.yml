@@ -42,8 +42,6 @@ services:
       - "traefik.http.routers.traefik.rule=Host(`dashboard.localhost`)"
       - "traefik.http.routers.traefik.service=api@internal"
 
-
-
   rabbitmq:
     image: rabbitmq:4-management
     container_name: shared_rabbitmq
@@ -324,7 +322,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
 
   # ==========================================
   # MS: PAYMENT

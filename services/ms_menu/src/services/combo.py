@@ -34,9 +34,7 @@ class ComboService:
             if dto.dishes_ids:
                 dishes = await self.uow.dishes.get_objects(dto.dishes_ids)
                 if len(dishes) != len(dto.dishes_ids):
-                    raise ValueError(
-                        "Один или несколько указанных блюд не найдены в базе"
-                    )
+                    raise ValueError("Один или несколько указанных блюд не найдены в базе")
 
             combo = Combo(name=dto.name, price=dto.price, dishes=dishes)
             self.uow.combo.add(combo)
@@ -56,9 +54,7 @@ class ComboService:
                 if dto.dishes_ids:
                     dishes = await self.uow.dishes.get_objects(dto.dishes_ids)
                     if len(dishes) != len(dto.dishes_ids):
-                        raise ValueError(
-                            "Один или несколько указанных блюд не найдены в базе"
-                        )
+                        raise ValueError("Один или несколько указанных блюд не найдены в базе")
                     combo.dishes = dishes
                 else:
                     combo.dishes = []

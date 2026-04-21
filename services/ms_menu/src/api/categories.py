@@ -6,9 +6,7 @@ from services.categories import CategoriesService
 category_router = APIRouter(prefix="/categories", tags=["Categories"])
 
 
-@category_router.get(
-    "", response_model=list[CategoryOut], status_code=status.HTTP_200_OK
-)
+@category_router.get("", response_model=list[CategoryOut], status_code=status.HTTP_200_OK)
 async def get_categories(
     uow: UOWDependency,
     broker: BrokerDependency,
@@ -18,9 +16,7 @@ async def get_categories(
     return categories
 
 
-@category_router.post(
-    "", response_model=CategoryOut, status_code=status.HTTP_201_CREATED
-)
+@category_router.post("", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
 async def add_category(
     uow: UOWDependency,
     broker: BrokerDependency,
@@ -31,9 +27,7 @@ async def add_category(
     return new_catgory
 
 
-@category_router.get(
-    "/{id}", response_model=CategoryOut, status_code=status.HTTP_200_OK
-)
+@category_router.get("/{id}", response_model=CategoryOut, status_code=status.HTTP_200_OK)
 async def get_category(
     id: int,
     uow: UOWDependency,
@@ -44,9 +38,7 @@ async def get_category(
     return category
 
 
-@category_router.patch(
-    "/{id}", response_model=CategoryOut, status_code=status.HTTP_200_OK
-)
+@category_router.patch("/{id}", response_model=CategoryOut, status_code=status.HTTP_200_OK)
 async def update_category(
     id: int,
     uow: UOWDependency,

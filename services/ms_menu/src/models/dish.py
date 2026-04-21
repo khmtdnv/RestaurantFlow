@@ -25,14 +25,10 @@ class Dish(TimestampMixin, Base):
         ForeignKey("categories.id", ondelete="SET NULL"),
         nullable=True,
     )
-    category: Mapped["Category | None"] = relationship(
-        back_populates="dishes", lazy="raise_on_sql"
-    )
+    category: Mapped["Category | None"] = relationship(back_populates="dishes", lazy="raise_on_sql")
 
     # Unidirectional M2M
-    tags: Mapped[list["Tag"]] = relationship(
-        secondary="dishes_tags", lazy="raise_on_sql"
-    )
+    tags: Mapped[list["Tag"]] = relationship(secondary="dishes_tags", lazy="raise_on_sql")
 
     # Bidirectional M2M
     combos: Mapped[list["Combo"]] = relationship(

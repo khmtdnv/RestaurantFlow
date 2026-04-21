@@ -48,9 +48,7 @@ class RabbitMQConsumer:
                     logger.info("Прошли в _process_message")
                     await handler()
                 except Exception as e:
-                    logger.error(
-                        f"Не удалось обработать сообщение {message.message_id}: {e}"
-                    )
+                    logger.error(f"Не удалось обработать сообщение {message.message_id}: {e}")
                     raise
 
         await queue.consume(_process_message)

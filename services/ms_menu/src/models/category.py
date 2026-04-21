@@ -14,6 +14,4 @@ class Category(TimestampMixin, Base):
     name: Mapped[str] = mapped_column()
 
     # ONE TO MANY
-    dishes: Mapped[List["Dish"]] = relationship(
-        back_populates="category", lazy="raise_on_sql"
-    )
+    dishes: Mapped[List["Dish"]] = relationship(back_populates="category", lazy="raise_on_sql")

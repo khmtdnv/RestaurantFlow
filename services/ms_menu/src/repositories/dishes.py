@@ -14,9 +14,7 @@ class DishesRepository(SQLAlchemyRepository):
 
     async def get_dish_by_id(self, id: int):
         statement = (
-            select(self.model)
-            .where(self.model.id == id)
-            .options(selectinload(self.model.tags))
+            select(self.model).where(self.model.id == id).options(selectinload(self.model.tags))
         )
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
@@ -60,9 +58,7 @@ class DishesRepository(SQLAlchemyRepository):
         return result.scalars().all()
 
     async def menu_offset_count(self):
-        stmt = select(func.count(self.model.id)).where(
-            self.model.is_available.is_(True)
-        )
+        stmt = select(func.count(self.model.id)).where(self.model.is_available.is_(True))
         result = await self.session.execute(stmt)
         return result.scalar()
 

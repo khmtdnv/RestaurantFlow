@@ -14,9 +14,7 @@ class ComboRepository(SQLAlchemyRepository):
 
     async def get_combo_by_id(self, id: int):
         statement = (
-            select(self.model)
-            .where(self.model.id == id)
-            .options(selectinload(self.model.dishes))
+            select(self.model).where(self.model.id == id).options(selectinload(self.model.dishes))
         )
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()

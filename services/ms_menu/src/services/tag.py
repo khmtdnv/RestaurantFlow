@@ -59,9 +59,7 @@ class TagService:
             await self.uow.session.execute(stmt)
 
         stmt_tags = pg_insert(DishesTags).values(dishes_tags_data)
-        stmt_tags = stmt_tags.on_conflict_do_nothing(
-            index_elements=["dish_id", "tag_id"]
-        )
+        stmt_tags = stmt_tags.on_conflict_do_nothing(index_elements=["dish_id", "tag_id"])
         await self.uow.session.execute(stmt_tags)
 
         tables_to_sync = ["categories", "tags", "dishes"]

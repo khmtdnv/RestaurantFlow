@@ -14,9 +14,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 engine = create_async_engine(settings.DATABASE_URL, echo=True)
 
-async_session_factory = async_sessionmaker(
-    engine, class_=AsyncSession, expire_on_commit=False
-)
+async_session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 price = Annotated[Decimal, mapped_column(Numeric(10, 2), nullable=False)]
 created_at = Annotated[datetime, mapped_column(server_default=func.now())]
 updated_at = Annotated[
